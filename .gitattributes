@@ -1,0 +1,14 @@
+# Shapefiles and their sidecars are binary. Marking them explicitly stops Git
+# from applying any end-of-line or text conversion, which would corrupt them.
+*.shp binary
+*.shx binary
+*.dbf binary
+*.prj binary
+*.cpg binary
+
+# Geospatial and spreadsheet containers
+*.gpkg binary
+*.tif binary
+*.xlsx binary
+*.pdf binary
+*.png binary
