@@ -13,6 +13,12 @@ env/
 model/*.log
 results/*.log
 
+# results/ tracks DATA tables only (.xlsx / .csv).  A local re-run with
+# BECCS_OUT_DIR=../results also writes its figure renders there; those are
+# duplicates of figures/ and are not tracked.
+results/*.png
+results/*.pdf
+
 # Jupyter
 .ipynb_checkpoints/
 

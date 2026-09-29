@@ -4,10 +4,10 @@
 (a) 100% stacked bars: share of cities in each of the 8 resource-state classes
     across all scenarios (baseline + 13 sensitivity scenarios).
 (b) Stacked bars: self-sufficient BECCS (S0) plus near-distance transport
-    (filled) and far-distance transport (outline only), split by commodity
-    (biomass <=200 km, CO2 <=250 km, water <=10 km). Two rows of bars with the
-    legend on the right in one vertical column; segment labels are absolute
-    values in black.
+    (filled) and far-distance transport (outline only), split by commodity.
+    A single 250 km distance threshold is used for biomass, CO2 and water.
+    Two rows of bars with the legend on the right in one vertical column;
+    segment labels are absolute values in black.
 
 Outputs PNG, PDF, XLSX. Reads the scenario folders under BECCS_RES_ROOT
 (default `sensitivity_results/`), and the baseline from BECCS_OUT_DIR.
@@ -71,8 +71,10 @@ def load_coord(path):
     return pd.read_excel(path, sheet_name='city')
 
 
-# distance thresholds separating 'near' (filled) from 'far' (outline only)
-DIST_TH = {'biomass': 200, 'co2': 250, 'water': 0.1}
+# distance thresholds separating 'near' (filled) from 'far' (outline only).
+# A single uniform 250 km cut-off for all three commodities, as in Fig. 10, so
+# the near/far split is not a commodity-specific choice.
+DIST_TH = {'biomass': 250, 'co2': 250, 'water': 250}
 
 
 def split_flows(flow_df, commodity=None):
@@ -253,21 +255,21 @@ ax_b.bar(x, s0s, 0.62, color='#40b948', edgecolor='#40b948', lw=EDGE_LW,
          label='Self-sufficient (S0)')
 b1 = s0s
 ax_b.bar(x, bn, 0.62, bottom=b1, color=bio_col, edgecolor=bio_col, lw=EDGE_LW,
-         label='biomass, \u2264 200 km')
+         label='biomass, \u2264 250 km')
 b2 = b1 + bn
 ax_b.bar(x, cn, 0.62, bottom=b2, color=co2_col, edgecolor=co2_col, lw=EDGE_LW,
          label='CO$_2$, \u2264 250 km')
 b3 = b2 + cn
-#ax_b.bar(x, wn, 0.62, bottom=b3, color=wat_col, edgecolor=wat_col, lw=EDGE_LW,
- #        label='+ water, \u2264 10 km')
+ax_b.bar(x, wn, 0.62, bottom=b3, color=wat_col, edgecolor=wat_col, lw=EDGE_LW,
+         label='water, \u2264 250 km')
 b4 = b3 + wn
 # far (outline only, no fill) segments
 ax_b.bar(x, bf, 0.62, bottom=b4, facecolor='none', edgecolor=bio_col, lw=EDGE_LW,
-         label='biomass, > 200 km')
+         label='biomass, > 250 km')
 ax_b.bar(x, cf, 0.62, bottom=b4 + bf, facecolor='none', edgecolor=co2_col, lw=EDGE_LW,
          label='CO$_2$, > 250 km')
 ax_b.bar(x, wf, 0.62, bottom=b4 + bf + cf, facecolor='none', edgecolor=wat_col, lw=EDGE_LW,
-         label='water, (if transferable)')
+         label='water, > 250 km')
 # absolute values (black) inside each segment; no total labels
 for i in range(len(recs)):
     segs = [
@@ -298,4 +300,4 @@ _style.panel_label(ax_b, 'b', fontsize=20)
 
 _style.save(fig, OUT)
 print('saved', OUT + '.png/.pdf/.xlsx')
-print('  scenarios:', len(recs))
+print('  情景数:', len(recs))

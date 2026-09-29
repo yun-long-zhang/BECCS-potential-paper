@@ -50,17 +50,17 @@ SHEET = os.environ.get('BECCS_SHEET', '市域内比较')
 #                      decadal means / 2021 bulletins (see HSWUD_PREF, MANUAL)
 WATER_SRC = os.environ.get('BECCS_WATER_SRC', 'new')
 # Which plant-level water table to read when WATER_SRC = 'new':
-#   water_thiessen_local.xlsx      local (per-prefecture) Thiessen  <- paper basis
+#   water_thiessen_local.xlsx      local (per-prefecture) Thiessen
 #   water_thiessen_cityclip.xlsx   nationwide Thiessen x own prefecture
-WATER_XLSX = os.path.join(
-    HERE, os.environ.get('BECCS_WATER_TABLE', 'water_thiessen_local.xlsx'))
+# Resolved from the active BECCS_SHEET basis (see _cols.water_table) so the two
+# cannot be mismatched; BECCS_WATER_TABLE still overrides explicitly.
+WATER_XLSX = os.path.join(HERE, _cols.water_table())
 
 # --- columns used when WATER_SRC = 'old' ---
-# COL_R_OLD : city-level total available water (1e8 m3), zeros mapped to the
-#              minimum value 0.14  (city-level, workbook)
+# COL_R_OLD : 地级市总可用水量（亿立方米）0值赋值为最低值0.14  (city-level, workbook)
 # --- columns used when WATER_SRC = 'new' ---
 # plant_water sheet of water_thiessen_local.xlsx:
-#   R_亿m3        available water resources   (ChinaWR TWR, 1980-2020 mean, 1e8 m3)
+#   R_亿m3        available water resources   (ChinaWR TWR, 1980-2020 mean, 亿m3)
 #   U_竞争_亿m3    competitive withdrawal      (HSWUD dom+manu+irr, same period)
 COL_R = '地级市总可用水量（亿立方米）0值赋值为最低值0.14'
 COL_R_NEW = 'R_亿m3'
@@ -70,7 +70,7 @@ COL_CONS = '煤电 ccs 系统年耗水总量  立方米'   # consumption mode (u
 CONSUMPTION = os.environ.get('BECCS_CONSUMPTION', '0') == '1'  # water-use metric
 if CONSUMPTION:
     COL_W = COL_CONS
-CONS_UNIT_1E8 = True if CONSUMPTION else False   # consumption column is in m3, so divide by 1e8 to get 1e8 m3
+CONS_UNIT_1E8 = True if CONSUMPTION else False   # consumption col is in m3, need /1e8 -> 亿m3
 COL_CAP = '电厂实际装机总功率MW'
 # biomass / storage buffer radius (see _cols.py): BECCS_BIO_RADIUS / BECCS_STO_RADIUS
 COL_BIO = _cols.bio_col()
@@ -117,7 +117,7 @@ def main():
     # ---- plant-level water (new basis) --------------------------------------
     # R and U come from water_thiessen_local.xlsx, aggregated over each plant's
     # LOCAL Thiessen cell ∩ its own prefecture: R = ChinaWR TWR (1980-2020 mean,
-    #  1e8 m3), U = HSWUD dom+manu+irr (same period).  Both are PER PLANT, so they
+    # 亿m3), U = HSWUD dom+manu+irr (same period).  Both are PER PLANT, so they
     # replace the city-level workbook column and the HSWUD/manual lookups.
     water_new = None
     if WATER_SRC == 'new':
@@ -138,7 +138,7 @@ def main():
     # coal+CCS water demand scales with generation (GEN_FACTOR)
     if COL_W in df.columns:
         df[COL_W] = df[COL_W] * GEN_FACTOR
-    # consumption column is in m3; convert to 1e8 m3 to match the WSR formulation
+    # consumption column is in m3; convert to 亿m3 to match WSR formulation
     if CONSUMPTION:
         df[COL_W] = df[COL_W] / 1e8
     df['city_n'] = df['所在城市'].map(norm)
@@ -163,7 +163,7 @@ def main():
         manual['competitive'] = manual['agri'] + manual['ind'] + manual['dom']
         manual_comp = dict(zip(manual['city_n'], manual['competitive']))
 
-    # ---- all 304 plant cities; the ORIGINAL city column is the canonical name ----
+    # ---- all 304 plant cities; use ORIGINAL 所在城市 as the canonical name ----
     # CITY-LEVEL water = SUM of the plants' own plant-level values (new basis),
     # or the single city-level workbook value (old basis).
     if WATER_SRC == 'new':
@@ -214,7 +214,7 @@ def main():
         city_tab['U_hswud'] = city_tab['city_n'].map(hswud_comp)
         city_tab['U_manual'] = city_tab['city_n'].map(manual_comp)
         # bingtuan cities -> their prefecture's manual value; if prefecture absent
-        # (白杨->塔城, 北屯->阿勒泰) fall back to the Xinjiang-wide per-capacity proxy:
+        # (白杨->塔城, 北屯->阿勒泰) fall back to 全疆 average per-capacity proxy:
         xj_total = manual.loc[manual['city'] == '全疆', 'competitive']
         xj_mean_city = float(xj_total.iloc[0]) / 13 if len(xj_total) else None
         bingtuan_val = {}
@@ -258,7 +258,7 @@ def main():
     #
     #   BCR_i = biomass_i / energy_i                 (all GJ)
     #   SER_i = min(storage_i / LIFE, injection_i) / emissions_i     (Mt, Mt/a)
-    #   WSR_i = (W_i + U_i + EFR * R_i) / R_i        (1e8 m3)
+    #   WSR_i = (W_i + U_i + EFR * R_i) / R_i        (亿 m3)
     #
     # The city-level columns stay exactly as they were (molecular sums over the
     # city), because the figures and the 8-class export read them.
@@ -302,23 +302,23 @@ def main():
 
     # ---- summary ----
     n = len(df)
-    print(f'plants: {n}, prefecture cities: {len(city_tab)}')
-    print('data-source breakdown:')
+    print(f'电厂数: {n}, 地级市数: {len(city_tab)}')
+    print('数据来源分布:')
     print(city_tab['数据来源'].value_counts().to_string())
-    print('\ncity-level total-pressure WSR (EFR 20/37/50/80):')
+    print('\n地级市级 总压 WSR (EFR 20/37/50/80):')
     for tag in ['EFR20', 'EFR00', 'EFR37', 'EFR50', 'EFR80']:
         w = city_tab[f'WSR_市_{tag}'].dropna()
-        print(f'  {tag}: WSR>1 = {100*(w>1).mean():.1f}% | median {w.median():.3f}')
-    print('\nwater basis:')
+        print(f'  {tag}: WSR>1 = {100*(w>1).mean():.1f}% | 中位 {w.median():.3f}')
+    print('\n水资源口径:')
     if WATER_SRC == 'new':
-        print('  new %s | plant-level R=%s, U=%s (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 mean)'
+        print('  新 %s | 电厂级 R=%s, U=%s (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值)'
               % (os.path.basename(WATER_XLSX), COL_R_NEW, COL_U_NEW))
-        print('  city value = sum of its plants\' own values (not the whole-city total)')
+        print('  城市值 = 本市各电厂自身值之和(非整市总量)')
     else:
-        print('  old | city-level R=%s | U = HSWUD (2010-19) / manual bulletins (2021)' % COL_R)
-    print('  sum R=%.0f 1e8 m3   sum U=%.0f 1e8 m3'
+        print('  旧 | 城市级 R=%s | U=HSWUD(2010-19)/手工年报(2021)' % COL_R)
+    print('  R 总和=%.0f 亿m3   U 总和=%.0f 亿m3'
           % (city_tab['R_亿m3'].sum(), city_tab['U_竞争_亿m3'].sum()))
-    print('\ncity-level BCR/SER:')
+    print('\n市级 BCR/SER:')
     bcr_gt1 = 100 * (city_tab['BCR_city'] > 1).mean()
     ser_gt1 = 100 * (city_tab['SER_city'] > 1).mean()
     print(f'  BCR_city>1: {bcr_gt1:.1f}% | SER_city>1: {ser_gt1:.1f}%')
@@ -326,11 +326,11 @@ def main():
     # ---- plant-level vs city-level comparison ----
     # Three different readings, labelled explicitly because they answer
     # different questions:
-    #   plant-level  : share of PLANTS whose own ratio > 1
-    #   city, by city: share of CITIES whose aggregate ratio > 1
-    #   city, by plant: share of PLANTS in a city whose aggregate > 1
-    print('\nplant-level vs city-level (three ratios):')
-    print('  %-6s %10s %14s %14s' % ('', 'plant', 'city (by city)', 'city (by plant)'))
+    #   电厂级      : share of PLANTS whose own ratio > 1
+    #   城市级(城市) : share of CITIES whose aggregate ratio > 1
+    #   城市级(电厂) : share of PLANTS living in a city whose aggregate > 1
+    print('\n电厂级 vs 城市级 (三比例):')
+    print('  %-6s %10s %14s %14s' % ('', '电厂级', '城市级(按城市)', '城市级(按电厂)'))
     cmp_specs = [('BCR', 'BCR_plant', 'BCR_city'),
                  ('SER', 'SER_plant', 'SER_city'),
                  ('WSR50', 'WSR_plant_EFR50', 'WSR_市_EFR50')]
@@ -340,10 +340,9 @@ def main():
         cv_c = pd.to_numeric(city_tab[cc], errors='coerce')    # per city
         print('  %-6s %9.1f%% %13.1f%% %13.1f%%' % (
             nm, 100 * (pv > 1).mean(), 100 * (cv_c > 1).mean(), 100 * (cv_p > 1).mean()))
-    print('  note: plant-level uses each plant\'s own resources; city-level sums the\n'
-      '        city\'s resources and demands separately before dividing')
+    print('  注: 电厂级用各厂自有资源; 城市级=同市各厂资源/需求分别求和后相除')
 
-    # ---- export (the prefecture key uses the ORIGINAL city name) ----
+    # ---- export (地级市 uses ORIGINAL 所在城市 name) ----
     city_out = city_tab[['所在城市', 'prov_n', 'prov_en', 'R_亿m3', 'U_hswud', 'U_manual',
                          'U_bingtuan', 'U_竞争_亿m3', '数据来源',
                          'BCR_city', 'SER_city',
@@ -392,21 +391,20 @@ def main():
         city_tab[['所在城市', '数据来源']].rename(columns={'所在城市': '地级市'}).to_excel(
             xw, sheet_name='coverage', index=False)
         rd = pd.DataFrame({
-            'parameter': ['EFR scenario', 'competitive-use source', 'available-water source',
-                          'water spatial scale',
-                          'WSR definition', 'BCR/SER scale', 'plant-level columns',
-                          'city-level columns'],
-            'value': ['0% / 37% baseline / 50% (environmental-flow reserve)',
-                      ('ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 mean (plant level)'
-                       if WATER_SRC == 'new' else 'mainly HSWUD (2010-19), supplemented by manual bulletins (2021)'),
-                      ('column %s of water_thiessen_local.xlsx (plant local Thiessen intersected with its own prefecture, 1980-2020 mean)'
-                       % COL_R_NEW if WATER_SRC == 'new' else COL_R),
-                      ('plant level (each plant\'s own Thiessen territory water)' if WATER_SRC == 'new'
-                       else 'prefecture level (apportioned to plants by installed capacity)'),
-                      'WSR = (coal-CCS withdrawal + competitive use + EFR*R) / R',
-                      'both plant-level and city-level are provided',
-                      'plant BCR / plant SER / plant WSR_EFR00-80 / plant available water / plant competitive water',
-                      'city aggregates (numerator and denominator summed separately) + plant-based mean / median / share>1']})
+            '参数': ['EFR_情景', '竞争用水来源', '可用水量来源', '水资源尺度',
+                     'WSR定义', 'BCR/SER尺度', '电厂级列(plant_level)',
+                     '市级列(city_level)'],
+            '值': ['0% / 37%基线 / 50% (环境流量保留比例)',
+                   ('ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值 (电厂级)'
+                    if WATER_SRC == 'new' else 'HSWUD(2010-19)为主, 手工年报(2021)补充'),
+                   ('water_thiessen_local.xlsx 列 %s (电厂局部泰森 ∩ 本市区, 1980-2020 均值)'
+                    % COL_R_NEW if WATER_SRC == 'new' else COL_R),
+                   ('电厂级 (各厂自有泰森领土水量)' if WATER_SRC == 'new'
+                    else '地级市级 (按装机分摊到电厂)'),
+                   'WSR = (煤电取水含CCS + 竞争用水 + EFR*R) / R',
+                   '电厂级与城市级两套同时给出',
+                   '电厂级BCR / 电厂级SER / 电厂级WSR_EFR00-80 / 电厂可用水 / 电厂竞争水',
+                   '市级*_市(分子分母分别求和) + 市级_电厂*均值/中位/>1占比']})
         rd.to_excel(xw, sheet_name='readme', index=False)
     print('\nsaved:', OUT)
 

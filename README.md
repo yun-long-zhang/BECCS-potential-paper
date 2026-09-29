@@ -137,6 +137,43 @@ The self-sufficient potential of a city is the minimum of the three. The
 coordinated scenarios (S1–S4) are solved as a multi-commodity transport-linear
 programme that allows biomass, CO₂ and water to move between cities.
 
+### How the coordinated scenarios are solved
+
+`5_optimize_beccs_multi.py` minimises the **real engineering transport cost** of
+inter-city flows and treats the national potential as a constraint rather than as
+the objective:
+
+```
+minimise   Σ_k K_k · (flow_k · distance)
+subject to Σ_i x_i ≥ T          (T raised until the LP becomes infeasible)
+           + the resource balances above
+```
+
+Because a tonne of capture capacity displaced from one city is credited to the
+receiving city through the same variable, the transport terms **cannot change the
+maximum attainable potential** — they only choose the cheapest of the equivalent
+optima. The reported potential is therefore set by resource feasibility, not by
+the cost parameters.
+
+Set `BECCS_COST_FRONTIER=1` to also write `results/BECCS_cost_frontier.xlsx`, the
+least cost of reaching the potential at 50/70/85/95/100% of each scenario's
+feasible maximum (five extra solves per scenario, so it is off by default).
+
+Unit costs and the resulting cost coefficients (USD per Mt CO₂ per km), where the
+coefficient is the unit cost times the physical mass moved per Mt CO₂:
+
+| Commodity | Unit cost | Mass per Mt CO₂ | K_k |
+|---|---|---|---|
+| biomass | 0.11 \$ t⁻¹ km⁻¹ | 6.614×10⁵ t | 72,751 |
+| captured CO₂ | 0.035 \$ t⁻¹ km⁻¹ | 1.000×10⁶ t | 35,000 |
+| water | 0.0085 \$ m⁻³ km⁻¹ | 4.82×10⁶ m³ | 40,970 |
+
+The legacy penalty-weighted objective (`max Σx − Σ w_k·flow·distance`, with
+`w_bio=1e-4`, `w_co2=2e-5`, `w_wat=1e-2`) is retained behind
+`BECCS_OBJECTIVE=penalty`. Both objectives reach **identical national potentials
+in every scenario**; they differ only in which equivalent flow configuration is
+selected. `cost` is the default.
+
 Key baseline parameters: biomass emission factor 0.112 t CO₂/GJ, capture rate
 0.90, co-firing energy penalty 1%, storage horizon 20 years, environmental-flow
 reserve 50%, biomass buffer 100 km, storage buffer 250 km.
@@ -149,4 +186,19 @@ reserve 50%, biomass buffer 100 km, storage buffer 250 km.
   `BECCS_GEO_SIMPLIFY=0` to disable.
 - **`BECCS_OUT_DIR` and `BECCS_SHEET` must both be set** to reproduce the
   manuscript basis. The defaults point at a different (local-Thiessen) basis.
+- **`BECCS_OBJECTIVE` selects the coordination objective** — `cost` (default) or
+  `penalty` (the legacy formulation). Both reproduce the published potentials.
+- **The shipped workbook is a reduced version.** `plant level analysis data.xlsx`
+  contains the single `city clip` sheet with the columns the released scripts
+  need; the other sheets and ~44,500 cached formula values present in the working
+  copy are omitted so that the file stays small. Consequently the scripts that
+  consume plant-level water-use columns (`1_compute_aggregate_city.py`,
+  `4_compute_beccs_potential.py`) cannot be re-run from this workbook alone — it
+  is not a source for step 1 of *Reproducing*. Everything downstream of the
+  intermediates in `results/` (all figures, including their `.xlsx` tables) runs
+  end-to-end from what is shipped here.
+- **`city_centroids.csv`** holds the plant-count-weighted mean coordinates of
+  each city's fleet. The figure scripts read it only when the workbook lacks the
+  `经度`/`纬度` columns (as in the reduced release copy); against the full working
+  workbook they use the workbook's own coordinates.
 - Figures are written to `BECCS_OUT_DIR`, so set it before running.

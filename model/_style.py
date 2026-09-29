@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """Shared Nature-style plotting configuration for all figures."""
+import os
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import geopandas as gpd
 
 # ---- Nature/journal style ----
 plt.rcParams.update({
@@ -78,7 +80,31 @@ def setup_panel(ax, xlabel=None, ylabel=None, title=None):
         ax.set_title(title)
 
 
+def read_map(path, tol=None, **kwargs):
+    """Read a polygon layer and simplify it *for rendering only*.
+
+    Why this exists: the prefecture layer carries 1.9 M vertices across its 371
+    polygons.  Drawing them as vector paths produced PDFs of 60-120 MB, past
+    GitHub's 100 MB per-file limit.  Rasterising the layer instead shrank the
+    file but turned the map into a bitmap (62 MB at 300 dpi) and lost crispness
+    on zoom.  Simplifying the geometry is strictly better: the PDF stays fully
+    vector at ~5 MB, and at the default tolerance the largest possible
+    displacement is far below one pixel.
+
+    Tolerance in degrees.  At 0.01 deg the map spans ~63 deg over ~12 in, so the
+    shift is ~0.002 in ~= 0.14 pt, i.e. invisible at 300 dpi (~4 px/pt).  The
+    underlying data files are NOT modified -- only the plotting copy.
+    """
+    g = gpd.read_file(path, **kwargs)
+    if tol is None:
+        tol = float(os.environ.get('BECCS_GEO_SIMPLIFY', '0.01'))
+    if tol > 0:
+        g['geometry'] = g.geometry.simplify(tol, preserve_topology=True)
+    return g
+
+
 def save(fig, out_base):
+    """Write PNG + PDF + (caller writes XLSX)."""
     fig.savefig(out_base + '.png', dpi=300, bbox_inches='tight')
     fig.savefig(out_base + '.pdf', bbox_inches='tight')
     plt.close(fig)
