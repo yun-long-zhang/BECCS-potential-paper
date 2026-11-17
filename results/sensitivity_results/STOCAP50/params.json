@@ -1,0 +1,11 @@
+{
+  "scenario": "STOCAP50",
+  "label": "Storage potential 50%",
+  "params": {
+    "BECCS_EFR": "0.50",
+    "BECCS_LIFE": "20",
+    "BECCS_BIO_FACTOR": "1.0",
+    "BECCS_STO_FACTOR": "0.50",
+    "label": "Storage potential 50%"
+  }
+}

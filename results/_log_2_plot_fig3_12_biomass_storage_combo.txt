@@ -1,0 +1,3 @@
+plant-level Lorenz population: 2167 plants (WSR missing for 4 of 2171)
+saved ../results_v2/Fig3_12_biomass_storage_combo.png/.pdf/.xlsx
+  BCR median=0.141, >1: 30.0% | SER >1: 17.5%

@@ -1,0 +1,11 @@
+{
+  "scenario": "CONS",
+  "label": "Consumption-based water use",
+  "params": {
+    "BECCS_EFR": "0.50",
+    "BECCS_LIFE": "20",
+    "BECCS_BIO_FACTOR": "1.0",
+    "BECCS_CONSUMPTION": "1",
+    "label": "Consumption-based water use"
+  }
+}

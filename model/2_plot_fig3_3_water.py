@@ -12,6 +12,8 @@ import os
 import re
 import numpy as np
 import pandas as pd
+
+import _cols
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -27,14 +29,14 @@ SCS_EXTENT = (105, 125, 3, 25)  # lon_min, lon_max, lat_min, lat_max
 
 
 def load_prefectures():
-    gdf = gpd.read_file(SHAPE, encoding='utf-8')
+    gdf = _style.read_map(SHAPE, encoding='utf-8')
     if gdf.crs is not None and not gdf.crs.is_geographic:
         gdf = gdf.to_crs(epsg=4326)
     return gdf
 
 
 def load_boundaries():
-    bd = gpd.read_file(BOUNDARY_SHP, encoding='utf-8')
+    bd = _style.read_map(BOUNDARY_SHP, encoding='utf-8')
     if bd.crs is not None and not bd.crs.is_geographic:
         bd = bd.to_crs(epsg=4326)
     return bd
@@ -74,7 +76,7 @@ for col in ['市级WSR_EFR20', '市级WSR_EFR50', '市级WSR_EFR80']:
     c[col] = pd.to_numeric(c[col], errors='coerce')
 
 # join city lon/lat (use plant coordinates averaged per city)
-p = pd.read_excel(SRC, sheet_name=os.environ.get('BECCS_SHEET', '市域内比较'))
+p = _cols.read_plants(SRC)
 p = p[p['序号'].notna()].copy()
 p['经度'] = pd.to_numeric(p['经度'], errors='coerce')
 p['纬度'] = pd.to_numeric(p['纬度'], errors='coerce')
@@ -183,7 +185,7 @@ gs_bot = fig.add_gridspec(1, 3, wspace=0.20,
 # ---- (a) prefecture face-fill WSR map (col 0, top) ----
 ax = fig.add_subplot(gs_top[0, 0])
 # diverging colormap centered at WSR=1 (1=white, >1 bluer, <1 pinker)
-cmap_pwb = LinearSegmentedColormap.from_list('pwb', ['#4575b4', '#ffffff', '#d73027'])
+cmap_pwb = _style.CMAP_WSR
 vmax = min(4, float(np.nanquantile(gdf['WSR'].dropna(), 0.98)))
 norm_pwb = TwoSlopeNorm(vmin=0.0, vcenter=1.0, vmax=vmax)
 # prefecture face-fill of WSR (like the mismatch map)
@@ -210,7 +212,7 @@ add_scs_inset(fig, ax, bd=_bd, plot_layer=_scs_layer)
 # ---- (b) provincial WSR>1 share (col 1, top) ----
 ax = fig.add_subplot(gs_top[0, 1])
 # two-colour bars around the WSR>1 dividing line (50%): pink above, blue below
-colors_b = ['#d73027' if v > 50 else '#4575b4' for v in prov['share_50']]
+colors_b = ['#B2182B' if v > 50 else '#2166AC' for v in prov['share_50']]
 ax.barh(prov['prov'], prov['share_50'], color=colors_b, alpha=0.5, label='EFR 50%')
 ax.axvline(50, color='k', ls=':', lw=0.8)
 ax.set_xlabel('Water-constrained cities (WSR > 1) [%]', fontsize=16)
@@ -225,8 +227,8 @@ w50 = scen['EFR 50%'].sort_values()
 order = np.arange(len(w50))
 lo = scen['EFR 20%'].sort_values().values
 hi = scen['EFR 80%'].sort_values().values
-ax.fill_between(order, lo, hi, color='#74add1', alpha=0.35, label='EFR 20–80%')
-ax.plot(order, w50.values, color='#fdae61', lw=3.0, label='EFR 50%')
+ax.fill_between(order, lo, hi, color='#56B4E9', alpha=0.35, label='EFR 20–80%')
+ax.plot(order, w50.values, color='#0072B2', lw=3.0, label='EFR 50%')
 ax.axhline(1, color='k', ls='--', lw=0.8)
 ax.set_xlabel('City rank', fontsize=16)
 ax.set_ylabel('City-level WSR', fontsize=16)
@@ -237,7 +239,7 @@ _style.panel_label(ax, 'c', fontsize=22)
 
 # ---- (d) scenario share bars (S3-b) ----
 ax = fig.add_subplot(gs_bot[0, 1])
-colors_s = ['#74add1', '#fdae61', '#91e3a4']
+colors_s = ['#56B4E9', '#0072B2', '#003F6B']
 bars = ax.bar(list(share.keys()), list(share.values()), color=colors_s, alpha=0.9)
 ax.axhline(100, color='k', lw=0.6)
 for b_, v_ in zip(bars, share.values()):
@@ -251,7 +253,7 @@ _style.panel_label(ax, 'd', fontsize=22)
 # ---- (e) step-line WSR distribution (S3-c) ----
 ax = fig.add_subplot(gs_bot[0, 2])
 bins = np.arange(0, 4.05, 0.25)
-for k, color in [('EFR 20%', '#74add1'), ('EFR 50%', '#fdae61'), ('EFR 80%', '#91e3a4')]:
+for k, color in [('EFR 20%', '#56B4E9'), ('EFR 50%', '#0072B2'), ('EFR 80%', '#003F6B')]:
     counts, _ = np.histogram(scen[k], bins=bins)
     centres = (bins[:-1] + bins[1:]) / 2.0
     xs = np.concatenate([centres, [centres[-1] + (centres[-1] - centres[0])]])

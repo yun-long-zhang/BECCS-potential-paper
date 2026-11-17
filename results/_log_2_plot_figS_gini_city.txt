@@ -1,0 +1,9 @@
+saved ../results_v2/FigS_gini_city.png/.pdf/.xlsx
+  (a) Emissions                      Gini = 0.52  zero share 0%
+  (a) Biomass (BCR)                  Gini = 0.86  zero share 2%
+  (a) Storage (SER)                  Gini = 0.94  zero share 60%
+  (a) Water (1/WSR)                  Gini = 0.23  zero share 0%
+  (b) Emissions                      Gini = 0.52  zero share 0%
+  (b) Accessible biomass energy      Gini = 0.47  zero share 2%
+  (b) Annualised storage capacity    Gini = 0.92  zero share 60%
+  (b) Available water                Gini = 0.71  zero share 31%

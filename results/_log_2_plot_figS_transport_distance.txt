@@ -1,0 +1,6 @@
+saved ../results_v2/FigS_transport_distance.png/.pdf/.xlsx
+           links  mass_Mt_yr  mean_km_mass_weighted  max_km  share_within_250km_pct  share_within_500km_pct
+commodity                                                                                                  
+biomass       94       131.5                  148.8   476.8                    85.3                   100.0
+co2          213       641.9                  266.8  1084.1                    56.4                    87.9
+water         56       958.0                  129.8   279.9                    96.4                   100.0

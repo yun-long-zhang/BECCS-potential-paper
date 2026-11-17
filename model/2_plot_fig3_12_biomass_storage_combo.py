@@ -49,18 +49,21 @@ COL_STO = _cols.sto_col()
 COL_INJ = _cols.inj_col()
 # the workbook's cached BCR column (V = S/M) is tied to the 100-km biomass
 # column, so it can only be used when the biomass radius is the baseline one
-USE_WB_BCR = os.environ.get('BECCS_BIO_RADIUS', '100').strip() == '100'
+# The workbook's cached BCR column is (100-km biomass) / (coal-only fuel energy),
+# so it is only valid for the 100 km radius WITHOUT the CCS energy penalty.
+USE_WB_BCR = (os.environ.get('BECCS_BIO_RADIUS', '100').strip() == '100'
+              and not _cols.ccs_penalty_on())
 
 
 def load_prefectures():
-    gdf = gpd.read_file(SHAPE, encoding='utf-8')
+    gdf = _style.read_map(SHAPE, encoding='utf-8')
     if gdf.crs is not None and not gdf.crs.is_geographic:
         gdf = gdf.to_crs(epsg=4326)
     return gdf
 
 
 def load_boundaries():
-    bd = gpd.read_file(BOUNDARY_SHP, encoding='utf-8')
+    bd = _style.read_map(BOUNDARY_SHP, encoding='utf-8')
     if bd.crs is not None and not bd.crs.is_geographic:
         bd = bd.to_crs(epsg=4326)
     return bd
@@ -83,7 +86,7 @@ def add_scs_inset(fig, ax, bd=None, plot_layer=None):
 
 
 # ---------------- data ----------------
-df = pd.read_excel(SRC, sheet_name=os.environ.get('BECCS_SHEET', '市域内比较'), header=0)
+df = _cols.read_plants(SRC)
 df = df[df['序号'].notna()].copy()
 df['prov'] = df['provinces'].astype(str)
 for c in ['经度', '纬度', '假设生物质100%能用，最大掺烧比例',
@@ -96,7 +99,13 @@ if USE_WB_BCR:
     df['BCR'] = (df['假设生物质100%能用，最大掺烧比例'] * BIO_FACTOR) / GEN_FACTOR
 else:
     # recompute from the selected biomass column (cached V is tied to 100 km)
-    df['BCR'] = (df[COL_BIO] / df['煤电系统所需能量GJ'].replace(0, np.nan)
+    # recompute from the selected biomass column; the denominator is the same
+    # fuel demand the potential model uses (see _cols.fuel_per_mwh)
+    _fuel = (pd.to_numeric(df['电厂实际装机总功率MW'], errors='coerce')
+             * pd.to_numeric(df['发电小时'], errors='coerce') * _cols.fuel_per_mwh(df)
+             if _cols.ccs_penalty_on() else
+             pd.to_numeric(df['煤电系统所需能量GJ'], errors='coerce'))
+    df['BCR'] = (pd.to_numeric(df[COL_BIO], errors='coerce') / _fuel.replace(0, np.nan)
                  * BIO_FACTOR / GEN_FACTOR)
 # Annualised storage potential is limited by BOTH the accessible volume over the
 # allocation horizon AND the annual injection-rate capability; the binding one
@@ -266,9 +275,17 @@ def _nice_log_ticks(vmin, vmax, maxn=8):
             sel = sorted(set(sel) | {0})
         pos = [float(e) for e in sel]
 
-    if pos[0] > vmin + 1e-9:
-        pos = [vmin] + pos                  # always mark the lower end of data
+    # mark the lower end of the data only when it is clearly apart from the
+    # first regular tick (>= 0.25 decade), otherwise the two labels collide
+    if pos[0] > vmin + 0.25:
+        pos = [vmin] + pos
     return pos
+
+
+def _tick_label(x, _p):
+    """Original-unit label of a log10 tick, at most two significant digits."""
+    v = float('%.2g' % (10 ** x))
+    return f'{v:g}'
 
 
 def draw_map(ax, xs, ys, vals, cmap, norm, cbar_label, zero=None):
@@ -285,7 +302,7 @@ def draw_map(ax, xs, ys, vals, cmap, norm, cbar_label, zero=None):
     sc = ax.scatter(xs, ys, c=vals, cmap=cmap, norm=norm, s=80, alpha=0.5,
                     linewidths=0, zorder=3)
     if zero is not None and len(zero[0]):
-        ax.scatter(zero[0], zero[1], s=26, marker='o', c='#9e9e9e',
+        ax.scatter(zero[0], zero[1], s=26, marker='o', c=_style.C_ZERO,
                    alpha=0.85, linewidths=0, zorder=2,
                    label='no resource (value = 0)')
         ax.legend(loc='lower left', fontsize=13, frameon=False,
@@ -299,7 +316,7 @@ def draw_map(ax, xs, ys, vals, cmap, norm, cbar_label, zero=None):
     # units.  Use %g, which trims only insignificant trailing zeros -- chaining
     # .rstrip('0') after %.4g turns 10 / 100 / 1000 into "1".
     cb.set_ticks(_nice_log_ticks(norm.vmin, norm.vmax))
-    cb.ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{10 ** x:g}'))
+    cb.ax.xaxis.set_major_formatter(plt.FuncFormatter(_tick_label))
     cb.set_label(cbar_label, fontsize=14)
     cb.ax.tick_params(labelsize=12, length=2)
     def _scs_layer(iax):
@@ -313,7 +330,7 @@ def draw_map(ax, xs, ys, vals, cmap, norm, cbar_label, zero=None):
 # layer ~74% of plants (SER = 0) simply vanished from panel (b).
 _ZERO_B = df[df['BCR'] <= 0]
 ax = fig.add_subplot(gs[0, 0])
-cmap_b = LinearSegmentedColormap.from_list('gwr', ['#d73027', '#ffffff', '#1a9850'])
+cmap_b = _style.CMAP_BCR
 logb = np.log10(df_bcr['BCR'].values)
 norm_b = TwoSlopeNorm(vmin=np.log10(df_bcr['BCR'].min()), vcenter=0.0,
                       vmax=np.log10(df_bcr['BCR'].quantile(0.99)))
@@ -324,7 +341,7 @@ _style.panel_label(ax, 'a', fontsize=24)
 
 _ZERO_S = df[df['SER'] <= 0]
 ax = fig.add_subplot(gs[0, 1])
-cmap_s = LinearSegmentedColormap.from_list('bwp', ['#d73027', '#ffffff', '#7b3294'])
+cmap_s = _style.CMAP_SER
 logs = np.log10(df_ser['SER'].values)
 norm_s = TwoSlopeNorm(vmin=np.log10(df_ser['SER'].min()), vcenter=0.0,
                       vmax=np.log10(df_ser['SER'].quantile(0.99)))
@@ -337,7 +354,7 @@ _style.panel_label(ax, 'b', fontsize=24)
 # Panel (c) is now on the same footing as (a) and (b): a plant-level scatter of
 # the concatenated plant-level WSR, using the same log/diverging treatment.
 ax_c = fig.add_subplot(gs[1, 0])
-cmap_pwb = LinearSegmentedColormap.from_list('pwb', ['#4575b4', '#ffffff', '#d73027'])
+cmap_pwb = _style.CMAP_WSR
 df_w = df.dropna(subset=['WSR']).copy()
 _ZERO_W = df_w[df_w['WSR'] <= 0]
 df_w = df_w[df_w['WSR'] > 0]
@@ -352,25 +369,16 @@ _style.panel_label(ax_c, 'c', fontsize=24)
 ax = fig.add_subplot(gs[1, 1])
 lx = _lx
 curves_lz = [
-    (_pl['emis'], 'Emissions', '#000000', _plg['emis']),
-    (_pl['bio'], 'Biomass (BCR)', '#80e397', _plg['bio']),
-    (_pl['sto'], 'Storage (SER)', '#d95f0e', _plg['sto']),
-    (_pl['water_inv'], 'Water (1/WSR)', '#2b8cbe', _plg['water_inv']),
+    (_pl['emis'], 'Emissions', _style.C_S0, _plg['emis']),
+    (_pl['bio'], 'Biomass (BCR)', _style.C_BIO, _plg['bio']),
+    (_pl['sto'], 'Storage (SER)', _style.C_CO2, _plg['sto']),
+    (_pl['water_inv'], 'Water (1/WSR)', _style.C_WAT, _plg['water_inv']),
 ]
-anchors_lz = {
-    'Water (1/WSR)':  (0.45, -0.01),
-    'Emissions':      (0.68, -0.02),
-    'Biomass (BCR)':  (0.80, -0.02),
-    'Storage (SER)':  (0.80, -0.02),
-}
-ax.plot([0, 1], [0, 1], ':', lw=2.0)
+ax.plot([0, 1], [0, 1], ':', lw=2.0, color='#9E9E9E')
+# Gini values go into the legend: the biomass and storage curves converge in
+# the lower-right corner, where in-plot labels overlapped the curves.
 for lc, lab, colr, gval in curves_lz:
-    ax.plot(lx, lc, lw=3, color=colr, label=lab)
-    xa, dy = anchors_lz[lab]
-    ya = np.interp(xa, lx, lc)
-    ax.annotate(f'Gini = {gval:.2f}', xy=(xa, ya), xytext=(xa + 0.02, ya + dy),
-                fontsize=16, color=colr, ha='left', va='center',
-                arrowprops=dict(arrowstyle='-', color=colr, lw=2.0))
+    ax.plot(lx, lc, lw=3, color=colr, label=f'{lab}, Gini = {gval:.2f}')
 ax.set_xlabel('Cumulative share of plants')
 ax.set_ylabel('Cumulative share of\nresource / emissions')
 ax.legend(fontsize=16, loc='upper left', frameon=False)
@@ -387,11 +395,11 @@ ax = ax_e
 is_scenario = (BIO_FACTOR != 1.0 or STO_FACTOR != 1.0 or LIFE != 20 or GEN_FACTOR != 1.0)
 # baseline mode shows only the baseline curves (BCR 100%, SER 20-yr, WSR EFR 50%);
 # sensitivity lines are handled in the dedicated sensitivity figure (Fig S16).
-ax.plot(bcr_all, share, lw=3.0, color='#80e397', label='Biomass (BCR)')
-ax.plot(ser_all, share, lw=3.0, color='#D55E00', label='Storage (SER)')
+ax.plot(bcr_all, share, lw=3.0, color=_style.C_BIO, label='Biomass (BCR)')
+ax.plot(ser_all, share, lw=3.0, color=_style.C_CO2, label='Storage (SER)')
 # all three curves are PLANT-level, so they share one population
 # (wpl_all / wsr_share are built above, before the data export)
-ax.plot(wpl_all, wsr_share, lw=3.0, color='#74add1', label='Water (WSR)')
+ax.plot(wpl_all, wsr_share, lw=3.0, color=_style.C_WAT, label='Water (WSR)')
 if is_scenario:
     tag = []
     if GEN_FACTOR != 1.0: tag.append(f'generation {GEN_FACTOR:.0%}')
@@ -404,9 +412,9 @@ ax.text(1.2, 0.2, 'BCR = SER = WSR = 1', rotation=90, va='center', fontsize=16)
 # mark where each curve crosses the ratio = 1 line: that ordinate is the share of
 # plants falling SHORT on that dimension.  SER (0.82) and BCR (0.66) are close
 # together, so their labels get a small vertical offset to avoid colliding.
-for _v, _s, _c, _dy in [(bcr_all, share, '#80e397', -0.028),
-                        (ser_all, share, '#D55E00', 0.028),
-                        (wpl_all, wsr_share, '#74add1', 0.0)]:
+for _v, _s, _c, _dy in [(bcr_all, share, _style.C_BIO, -0.028),
+                        (ser_all, share, _style.C_CO2, 0.028),
+                        (wpl_all, wsr_share, _style.C_WAT, 0.0)]:
     _y = float(np.interp(1.0, _v, _s))
     ax.plot([1.0], [_y], marker='o', ms=11, color=_c,
             markeredgecolor='white', markeredgewidth=1.5, zorder=6)

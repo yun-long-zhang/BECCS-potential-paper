@@ -24,6 +24,8 @@ import os
 import numpy as np
 import pandas as pd
 
+import _cols
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_DIR = os.environ.get('BECCS_OUT_DIR', HERE)
 AGG = os.path.join(OUT_DIR, 'plant_city_hswud_aggregated.xlsx')
@@ -60,7 +62,7 @@ if EWR > 0:
     # EWR: brine water recovered from saline-aquifer storage (1 t water per t CO2 stored)
     # approximate per-city: recovered water raises available water, lowering WSR.
     # Use plant-level saline capacity aggregated to city, scaled by WSR definition.
-    p_salt = pd.read_excel(PLANT, sheet_name=os.environ.get('BECCS_SHEET', '市域内比较'))
+    p_salt = _cols.read_plants(PLANT)
     p_salt = p_salt[p_salt['序号'].notna()].copy()
     p_salt['地级市'] = p_salt['所在城市'].astype(str)
     salt = pd.to_numeric(p_salt['咸水层封存潜力'], errors='coerce').fillna(0.0) / LIFE
@@ -75,7 +77,7 @@ if EWR > 0:
     c['WSR'] = c['WSR'].fillna(c[WSR_COL])
 
 # ---- join lon/lat + emissions (for map size + emission stats) ----
-p = pd.read_excel(PLANT, sheet_name=os.environ.get('BECCS_SHEET', '市域内比较'))
+p = _cols.read_plants(PLANT)
 p = p[p['序号'].notna()].copy()
 p['经度'] = pd.to_numeric(p['经度'], errors='coerce')
 p['纬度'] = pd.to_numeric(p['纬度'], errors='coerce')

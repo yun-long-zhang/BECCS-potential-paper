@@ -1,0 +1,10 @@
+{
+  "scenario": "EFR20",
+  "label": "Environmental flow 20%",
+  "params": {
+    "BECCS_EFR": "0.20",
+    "BECCS_LIFE": "20",
+    "BECCS_BIO_FACTOR": "1.0",
+    "label": "Environmental flow 20%"
+  }
+}

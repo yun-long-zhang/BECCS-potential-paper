@@ -38,7 +38,7 @@ GEN_FACTOR = float(os.environ.get('BECCS_GEN_FACTOR', '1.0'))
 # input sub-sheet: '市域内比较' = local (per-prefecture) Thiessen basis, the one
 # used in the paper; 'city clip' / 'Sheet2' are the earlier nationwide-Thiessen
 # bases, kept for comparison.
-SHEET = os.environ.get('BECCS_SHEET', '市域内比较')
+SHEET = _cols.basis()
 
 # ---- water source -----------------------------------------------------------
 # WATER_SRC = 'new'  : plant-level ChinaWR + HSWUD aggregated over each plant's
@@ -65,18 +65,18 @@ WATER_XLSX = os.path.join(HERE, _cols.water_table())
 COL_R = '地级市总可用水量（亿立方米）0值赋值为最低值0.14'
 COL_R_NEW = 'R_亿m3'
 COL_U_NEW = 'U_竞争_亿m3'
-COL_W = '煤电-ccs-系统年有效取水总量-除去海水-亿立方米'
-COL_CONS = '煤电 ccs 系统年耗水总量  立方米'   # consumption mode (use instead of withdrawal)
+# coal + CCS water use per plant (亿m3/yr), built in main() from the unit sheet
+# joined by 电厂编号 (see _cols.water_use): withdrawal excluding seawater by
+# default, consumption when BECCS_CONSUMPTION=1, scaled by BECCS_GEN_FACTOR.
+COL_W = 'W_coal_ccs_亿m3'
 CONSUMPTION = os.environ.get('BECCS_CONSUMPTION', '0') == '1'  # water-use metric
-if CONSUMPTION:
-    COL_W = COL_CONS
-CONS_UNIT_1E8 = True if CONSUMPTION else False   # consumption col is in m3, need /1e8 -> 亿m3
 COL_CAP = '电厂实际装机总功率MW'
 # biomass / storage buffer radius (see _cols.py): BECCS_BIO_RADIUS / BECCS_STO_RADIUS
 COL_BIO = _cols.bio_col()
 COL_STO = _cols.sto_col()
 COL_INJ = _cols.inj_col()          # annual injection-rate capability
-COL_E = '煤电系统所需能量GJ'
+COL_E = 'fuel_GJ'   # BCR denominator, built in main() (see _cols.fuel_per_mwh)
+COL_E_LEGACY = '煤电系统所需能量GJ'   # coal-only fuel energy (BECCS_CCS_PENALTY=0)
 COL_EMIS = '年碳排放Mt'
 EFR_ZERO = 0.00   # legacy (kept)
 EFR_BASE = 0.37   # historical baseline (kept)
@@ -109,10 +109,18 @@ def norm(s):
 def main():
     # ---- load ----
     m = pd.read_csv(MAP)
-    df = pd.read_excel(PLANT, sheet_name=SHEET)
-    df = df[df['序号'].notna()].copy()
-    for c in [COL_R, COL_W, COL_CAP, COL_BIO, COL_STO, COL_INJ, COL_E, COL_EMIS]:
+    df = _cols.read_plants(PLANT)
+    for c in [COL_R, COL_CAP, COL_BIO, COL_STO, COL_INJ, COL_E_LEGACY, COL_EMIS]:
         df[c] = pd.to_numeric(df[c], errors='coerce')
+    # coal + CCS water use from the unit sheet (already scaled by GEN_FACTOR)
+    df[COL_W] = _cols.water_use(PLANT, df)[1] / 1e8
+    # fuel demand at base generation: coal-only heat rate (legacy), or with the
+    # co-firing and CCS energy penalties at fixed net output
+    if _cols.ccs_penalty_on():
+        df[COL_E] = (df[COL_CAP] * pd.to_numeric(df['发电小时'], errors='coerce')
+                     * _cols.fuel_per_mwh(df))
+    else:
+        df[COL_E] = df[COL_E_LEGACY]
 
     # ---- plant-level water (new basis) --------------------------------------
     # R and U come from water_thiessen_local.xlsx, aggregated over each plant's
@@ -135,12 +143,6 @@ def main():
             miss = df.loc[df['R_plant'].isna(), '电厂编号'].tolist()
             print('  WARNING: no water row for plants %s -> treated as 0' % miss[:10])
         df[['R_plant', 'U_plant']] = df[['R_plant', 'U_plant']].fillna(0.0)
-    # coal+CCS water demand scales with generation (GEN_FACTOR)
-    if COL_W in df.columns:
-        df[COL_W] = df[COL_W] * GEN_FACTOR
-    # consumption column is in m3; convert to 亿m3 to match WSR formulation
-    if CONSUMPTION:
-        df[COL_W] = df[COL_W] / 1e8
     df['city_n'] = df['所在城市'].map(norm)
     df['prov_n'] = df['所在省'].map(norm)
     # English province name for labels
@@ -189,7 +191,7 @@ def main():
     # '假设封存20年，最大封存或注入比例' (AN) column times annual emissions.
     city_res = df.groupby('city_n').agg(
         bio_sum=(COL_BIO, 'sum'),
-        e_sum=('煤电系统所需能量GJ', 'sum'),
+        e_sum=(COL_E, 'sum'),
         sto_sum=(COL_STO, 'sum'),
         inj_sum=(COL_INJ, 'sum'),
         emis_sum=('年碳排放Mt', 'sum'),

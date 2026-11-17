@@ -1,0 +1,25 @@
+plants: 2171 | cities: 304
+national: storage 635 | water 3090 | biomass 1035 Mt/yr
+=== final annual BECCS potential (min of three limits; biogenic C only; fixed generation) ===
+  national: 236 Mt CO2/yr
+
+limiting resource (cities):
+limiting
+sto_Mt_yr    228
+wat_Mt_yr     40
+bio_Mt_yr     36
+
+top 10 cities by potential:
+city    GW  sto_Mt_yr  wat_Mt_yr  bio_Mt_yr  BECCS_Mt_yr
+ 哈尔滨  4.39      21.81      22.57      17.99        21.81
+  唐山  9.00      20.37      19.13       6.19        12.33
+  重庆 15.25      11.54      74.68      20.11        11.54
+  南阳  4.48      11.40      19.30      20.34        11.40
+  榆林 22.36      10.92     108.93       5.56        10.79
+  晋中  6.17      14.35      30.71       2.21         9.89
+锡林郭勒 13.75      19.28      67.13       2.33         7.38
+  塔城  1.38       7.23       7.07       4.31         7.05
+  四平  2.59       8.44      13.20       5.85         7.00
+ 驻马店  1.32       6.70       6.80       6.80         6.70
+
+saved ../results_v2_new/BECCS_potential_plant.xlsx & ../results_v2_new/BECCS_potential_city.xlsx

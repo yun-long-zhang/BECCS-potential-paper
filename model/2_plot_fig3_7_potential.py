@@ -36,7 +36,7 @@ OUT = os.path.join(OUT_DIR, 'Fig3_7_potential')
 
 
 def load_boundaries():
-    bd = gpd.read_file(BOUNDARY_SHP, encoding='utf-8')
+    bd = _style.read_map(BOUNDARY_SHP, encoding='utf-8')
     if bd.crs is not None and not bd.crs.is_geographic:
         bd = bd.to_crs(epsg=4326)
     return bd
@@ -66,7 +66,7 @@ def add_scs_inset(fig, ax, bd=None, plot_layer=None):
 # independently and then sums, which under-counts (min of sums < sum of mins);
 # that variant is NOT the paper basis and would disagree with Fig. 3.7b.
 pot = pd.read_excel(POT, sheet_name='city_coordinated')
-gdf = gpd.read_file(SHAPE, encoding='utf-8')
+gdf = _style.read_map(SHAPE, encoding='utf-8')
 if gdf.crs is not None and not gdf.crs.is_geographic:
     gdf = gdf.to_crs(epsg=4326)
 
@@ -109,10 +109,10 @@ matched = pot.dropna(subset=['shape_city'])
 print(f'matched: {len(matched)}/{len(pot)}')
 
 panels = [
-    ('sto_Mt_yr', 'a', 'BECCS potential with storage bound', '#7b3294'),
-    ('wat_Mt_yr', 'b', 'BECCS potential with water limit', '#d7191c'),
-    ('bio_Mt_yr', 'c', 'BECCS potential with biomass ceiling', '#8a8a8a'),
-    ('BECCS_Mt_yr', 'd', 'Final BECCS potential', '#40b948'),
+    ('sto_Mt_yr', 'a', 'BECCS potential with storage bound', _style.C_CO2),
+    ('wat_Mt_yr', 'b', 'BECCS potential with water limit', _style.C_WAT),
+    ('bio_Mt_yr', 'c', 'BECCS potential with local biomass', _style.C_BIO),
+    ('BECCS_Mt_yr', 'd', 'Final BECCS potential', _style.C_S0),
 ]
 # per-panel colour scale: white -> panel colour
 cmaps = {col: LinearSegmentedColormap.from_list(f'pot_{col}', ['#ffffff', clr])
@@ -209,16 +209,19 @@ steps = [bio0, wat_cut, sto_cut, final]
 wcum = [0.0, bio0, bio0 - wat_cut, bio0 - wat_cut - sto_cut]
 wbot = [0.0, wcum[2], wcum[3], 0.0]
 whei = [bio0, wat_cut, sto_cut, final]
-wcol = ["#B95A83", "#5199a5", '#8a8a8a', "#40b948"]
+wcol = [_style.C_BIO, _style.C_WAT, _style.C_CO2, _style.C_S0]
 for i, (hb, hh, col) in enumerate(zip(wbot, whei, wcol)):
     axw.bar(i, hh, 0.62, bottom=hb, color=col, alpha=0.9, zorder=3)
 for i in range(3):
     xl = i + 0.31; xr = (i + 1) - 0.31
     axw.plot([xl, xr], [wcum[i + 1], wcum[i + 1]], color='#666666', lw=1.1, zorder=2)
-wlab = [f'Biomass\nceiling',
-        f'Water\nlimit',
-        f'Storage\nbound',
-        f'self-sufficient\n(S0)']
+# Each city's whole cut (biomass-limited potential minus S0) is attributed to
+# the resource that binds in that city; the bars are therefore NOT a sequential
+# imposition of the two constraints (whose split would depend on the order).
+wlab = [f'Local biomass\npotential',
+        f'Water-limited\ncities',
+        f'Storage-limited\ncities',
+        f'Self-sufficient\n(S0)']
 axw.set_xticks(range(4)); axw.set_xticklabels(wlab, rotation=30, fontsize=16, ha='right')
 for i, (hb, hh) in enumerate(zip(wbot, whei)):
     axw.text(i, hb + hh + 12, f'{abs(hh):.0f}', ha='center', va='bottom',
@@ -233,21 +236,22 @@ _style.panel_label(axw, 'a', fontsize=20)
 # potential: binned histogram of city potential (log-spaced bins because the
 # distribution is strongly right-skewed), stacked by the limiting resource,
 # with a cumulative curve of the national total.
-lim_col = {'bio_Mt_yr': "#B95A83", 'wat_Mt_yr': "#5199a5", 'sto_Mt_yr': '#8a8a8a'}
-bins = [0.0, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0]
-bin_lab = ['0', '0–0.1', '0.1–0.5', '0.5–1', '1–2', '2–5', '5–10', '10–20']
+lim_col = {'bio_Mt_yr': _style.C_BIO, 'wat_Mt_yr': _style.C_WAT, 'sto_Mt_yr': _style.C_CO2}
+# first bin holds the cities with exactly zero potential; one label per bin
+bins = [0.0, 1e-9, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0]
+bin_lab = ['0', '0–0.1', '0.1–0.5', '0.5–1', '1–2', '2–5', '5–10', '10–20', '20–50']
 # histogram counts per bin per limiting resource
 hist = {}
 for lk in lim_col:
     hist[lk] = np.histogram(cc.loc[cc['lim'] == lk, 'BECCS_Mt_yr'], bins=bins)[0]
 bin_c = 0.5 * (np.array(bins[:-1]) + np.array(bins[1:]))
 xr = np.arange(len(bins) - 1)
-# stacked bars (bottom-up: biomass, water, storage)
-bot = np.zeros(len(xr))
-for lk, colr in lim_col.items():
-    axs.bar(xr, hist[lk], width=0.7, bottom=bot, color=colr,
-            edgecolor='white', lw=0.4, alpha=0.9, label=f'{lk.split("_")[0]}-limited')
-    bot = bot + hist[lk]
+# grouped bars, one per limiting resource: on a log axis stacked segments
+# cannot be read (segment height is not proportional to its count)
+_gw = 0.26
+for j, (lk, colr) in enumerate(lim_col.items()):
+    axs.bar(xr + (j - 1) * _gw, hist[lk], width=_gw, color=colr,
+            edgecolor='white', lw=0.4, label=f'{lk.split("_")[0]}-limited')
 # cumulative potential curve (right y-axis) — one curve per city rank
 pot_bin = np.array([cc.loc[(cc['BECCS_Mt_yr'] >= bins[i]) & (cc['BECCS_Mt_yr'] < bins[i + 1]),
                             'BECCS_Mt_yr'].sum() for i in range(len(bins) - 1)])
@@ -258,8 +262,8 @@ ax2b.set_ylabel('Cumulative potential (Mt CO$_2$ yr$^{-1}$)', fontsize=16)
 ax2b.set_ylim(0, cum_bin.max() * 1.25)
 ax2b.tick_params(labelsize=16)
 ax2b.legend(fontsize=14, loc='center right', bbox_to_anchor=(0.72, 0.70), frameon=False)
-# annotations (consistent with the histogram's first bin [0, 0.1))
-n_zero = int((cc['BECCS_Mt_yr'] < 0.1).sum())   # matches the first bar
+# annotations: the first two bars are exactly 0 and (0, 0.1)
+n_zero = int((cc['BECCS_Mt_yr'] < 0.1).sum())   # sum of the first two bars
 n_city = len(cc)
 bio_share = 100 * cc.loc[cc['lim'] == 'bio_Mt_yr', 'BECCS_Mt_yr'].sum() / cc['BECCS_Mt_yr'].sum()
 axs.text(0.15, 0.97, f'{n_zero} cities ({(100 * n_zero / n_city):.0f}%) with potential < 0.1 Mt yr$^{{-1}}$\n',
@@ -283,4 +287,15 @@ axs.set_title('', fontsize=16)
 _style.panel_label(axs, 'b', fontsize=20)
 
 _style.save(figb, OUT_B)
+with _pd.ExcelWriter(OUT_B + '.xlsx') as xw:
+    _pd.DataFrame({'step': ['local biomass potential',
+                            'cut in water-limited cities',
+                            'cut in storage-limited cities', 'self-sufficient (S0)'],
+                   'Mt_CO2_yr': [bio0, -wat_cut, -sto_cut, final],
+                   'n_cities_limited': [np.nan, n_wat, n_sto, np.nan]}).to_excel(
+        xw, sheet_name='a_waterfall', index=False)
+    _pd.DataFrame({'bin_Mt_CO2_yr': bin_lab,
+                   **{'n_' + k.split('_')[0] + '_limited': hist[k] for k in lim_col},
+                   'potential_in_bin': pot_bin, 'cumulative_potential': cum_bin}).to_excel(
+        xw, sheet_name='b_histogram', index=False)
 print('saved', OUT_B + '.png/.pdf/.xlsx')

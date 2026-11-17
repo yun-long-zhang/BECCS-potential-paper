@@ -1,0 +1,23 @@
+S0_local: 274.641 Mt/yr  (bio=0.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.00 bn$/yr
+S1_biomass: 898.399 Mt/yr  (bio=623.8, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=29.66 bn$/yr
+S2_co2: 740.723 Mt/yr  (bio=0.0, co2=466.1, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=4.65 bn$/yr
+S3_biomass+co2: 1145.976 Mt/yr  (bio=405.3, co2=715.5, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=11.68 bn$/yr
+S4_biomass+co2+water: 1145.976 Mt/yr  (bio=198.9, co2=641.9, wat=256.1 Mt CO2-eq / 958 Mt water)  cost=9.20 bn$/yr
+S1_biomass_250km: 503.054 Mt/yr  (bio=237.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=2.46 bn$/yr
+S2_co2_250km: 523.143 Mt/yr  (bio=0.0, co2=263.8, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.32 bn$/yr
+S3_biomass+co2_250km: 974.254 Mt/yr  (bio=513.1, co2=559.7, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=8.92 bn$/yr
+S4_biomass+co2+water_250km: 1016.150 Mt/yr  (bio=340.8, co2=522.5, wat=259.2 Mt CO2-eq / 1170 Mt water)  cost=7.57 bn$/yr
+
+--- national BECCS potential by scenario (Mt/yr) ---
+                  scenario  total_Mt_yr  biomass_transport  co2_transport  water_transport  water_transport_Mt_water
+                  S0_local   274.641349           0.000000       0.000000         0.000000                  0.000000
+                S1_biomass   898.398795         623.757443       0.000000         0.000000                  0.000000
+                    S2_co2   740.722731           0.000000     466.081382         0.000000                  0.000000
+            S3_biomass+co2  1145.976391         405.253621     715.548333         0.000000                  0.000000
+      S4_biomass+co2+water  1145.976392         198.867721     641.938095       256.075110                958.036522
+          S1_biomass_250km   503.054187         237.047229       0.000000         0.000000                  0.000000
+              S2_co2_250km   523.142884           0.000000     263.804399         0.000000                  0.000000
+      S3_biomass+co2_250km   974.254136         513.088401     559.668791         0.000000                  0.000000
+S4_biomass+co2+water_250km  1016.149716         340.843010     522.520806       259.190045               1169.788290
+
+saved ../results_v2_new/BECCS_scenarios_summary.xlsx & ../results_v2_new/BECCS_scenario_city.xlsx & ../results_v2_new/BECCS_coordination_result.xlsx

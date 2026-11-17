@@ -42,24 +42,21 @@ CLASS_LABELS = {
     1: 'bio+sto+water-rich', 2: 'water-short', 3: 'bio+sto-short', 4: 'bio-short',
     5: 'sto-short', 6: 'bio+water-short', 7: 'sto+water-short', 8: 'resource vacuum',
 }
-CLASS_COLORS = {
-    1: '#1a9850', 2: '#00b0f0', 3: '#a50f15', 4: '#8dd3c7',
-    5: '#ffff33', 6: '#fd8d3c', 7: '#984ea3', 8: '#4d4d4d',
-}
+CLASS_COLORS = dict(_style.CLASS_COLORS)
 
 SCEN_ORDER = ['Baseline', 'EFR20', 'EFR80', 'BIO250', 'BIO500', 'BIO25', 'BIO50',
               'STO100', 'STO500', 'STOR25', 'STOR30', 'STOCAP50', 'STOCAP25',
               'GEN50', 'GEN25', 'DESAL', 'EWR', 'CONS']
+# tick labels use the scenario codes of Supplementary Table S2
 SCEN_LABEL = {
     'Baseline': 'Baseline', 'EFR20': 'EFR 20%', 'EFR80': 'EFR 80%',
-    'BIO25': 'Biomass 25%', 'BIO50': 'Biomass 50%', 'BIO250': 'Biomass 250km',
-    'BIO500': 'Biomass 500km',
-    'STO100': 'Storage 100km', 'STO500': 'Storage 500km',
-    'STOR25': 'Storage 25yr', 'STOR30': 'Storage 30yr',
-    'STOCAP50': 'Sto-cap 50%', 'STOCAP25': 'Sto-cap 25%',
-    'GEN50': 'Gen 50%', 'GEN25': 'Gen 25%',
-    'DESAL': 'Desalination', 'EWR': 'CO$_2$-EWR',
-    'CONS': 'Consumption',
+    'BIO25': 'BIO 25%', 'BIO50': 'BIO 50%', 'BIO250': 'BIO 250 km',
+    'BIO500': 'BIO 500 km',
+    'STO100': 'STO 100 km', 'STO500': 'STO 500 km',
+    'STOR25': 'STOR 25 yr', 'STOR30': 'STOR 30 yr',
+    'STOCAP50': 'STOCAP 50%', 'STOCAP25': 'STOCAP 25%',
+    'GEN50': 'GEN 50%', 'GEN25': 'GEN 25%',
+    'DESAL': 'DESAL', 'EWR': 'EWR', 'CONS': 'CONS',
 }
 
 
@@ -134,30 +131,45 @@ def collect():
     # order
     order = {n: i for i, n in enumerate(SCEN_ORDER)}
     recs.sort(key=lambda r: order.get(r['name'], 99))
-    # per-scenario near/far increments for panel (b)
     for r in recs:
-        cc = r['cc']
-        s0 = cc['S0_local_Mt_yr'].sum()
-        s1 = cc['S1_biomass_Mt_yr'].sum()
-        s3 = cc['S3_biomass+co2_Mt_yr'].sum()
-        s4 = cc['S4_biomass+co2+water_Mt_yr'].sum()
-        fl = r['flows']
-        # per-commodity split, same convention as Fig 3.10 panel (a): the
-        # biomass and CO2 increments of the fully coordinated bar (S4) are
-        # split using the S4 (joint) flow sheet, so the two figures agree
-        b_n, b_f = split_flows(fl.get('S4_biomass+co2+water'), 'biomass')
-        c_n, c_f = split_flows(fl.get('S4_biomass+co2+water'), 'co2')
-        w_n, w_f = split_flows(fl.get('S4_biomass+co2+water'), 'water')
-        inc_bio = s1 - s0
-        inc_co2 = s3 - s1
-        inc_wat = s4 - s3
-        r['bn'] = inc_bio * (b_n / (b_n + b_f) if (b_n + b_f) else 0)
-        r['bf'] = inc_bio - r['bn']
-        r['cn'] = inc_co2 * (c_n / (c_n + c_f) if (c_n + c_f) else 0)
-        r['cf'] = inc_co2 - r['cn']
-        r['wn'] = inc_wat * (w_n / (w_n + w_f) if (w_n + w_f) else 0)
-        r['wf'] = inc_wat - r['wn']
+        r.update(stack(r['cc'], r['flows']))
     return recs
+
+
+NEAR_KM = 250
+
+
+def stack(cc, fl):
+    """Panel (b) segments of the fully coordinated (S4) bar.
+
+    v2 results carry each scenario solved with all flows capped at NEAR_KM as a
+    hard constraint ('<scen>_250km'): the within-cap potential is split
+    sequentially (S0 -> +biomass -> +CO2 -> +water) and the rest of S4 is one
+    'beyond 250 km' segment (key 'far').  Older results fall back to the legacy
+    split, which re-weights each increment by the share of S4 flows <= 250 km.
+    """
+    tot = lambda c: float(cc[c].sum())
+    s0, s1 = tot('S0_local_Mt_yr'), tot('S1_biomass_Mt_yr')
+    s2, s3 = tot('S2_co2_Mt_yr'), tot('S3_biomass+co2_Mt_yr')
+    s4 = tot('S4_biomass+co2+water_Mt_yr')
+    out = {'S0_local': s0, 'S1_biomass': s1, 'S2_co2': s2,
+           'S3_combined': s3, 'S4_combined': s4}
+    near = ['%s_%dkm_Mt_yr' % (k, NEAR_KM) for k in
+            ('S1_biomass', 'S3_biomass+co2', 'S4_biomass+co2+water')]
+    if all(c in cc.columns for c in near):
+        n1, n3, n4 = (tot(c) for c in near)
+        out.update(hard_cap=True, bn=n1 - s0, cn=n3 - n1, wn=n4 - n3,
+                   bf=0.0, cf=0.0, wf=0.0, far=s4 - n4,
+                   S1_250km=n1, S3_250km=n3, S4_250km=n4)
+        return out
+    s4f = fl.get('S4_biomass+co2+water')
+    for key, comm, inc in (('b', 'biomass', s1 - s0), ('c', 'co2', s3 - s1),
+                           ('w', 'water', s4 - s3)):
+        n_, f_ = split_flows(s4f, comm)
+        out[key + 'n'] = inc * (n_ / (n_ + f_) if (n_ + f_) else 0)
+        out[key + 'f'] = inc - out[key + 'n']
+    out.update(hard_cap=False, far=0.0)
+    return out
 
 
 recs = collect()
@@ -171,33 +183,17 @@ with pd.ExcelWriter(OUT + '.xlsx') as xw:
         n = len(c8)
         dist = {cid: 100 * (c8['class_id'] == cid).mean() for cid in range(1, 9)}
         rows_a.append({'scenario': r['name'], **{f'class_{cid}': dist[cid] for cid in range(1, 9)}})
-        s0 = cc['S0_local_Mt_yr'].sum()
-        s1 = cc['S1_biomass_Mt_yr'].sum()
-        s2 = cc['S2_co2_Mt_yr'].sum()
-        s3 = cc['S3_biomass+co2_Mt_yr'].sum()
-        s4 = cc['S4_biomass+co2+water_Mt_yr'].sum()
-        fl = r['flows']
-        # near/far split of each transport increment (S1-S0, S3-S1, S4-S3);
-        # biomass & CO2 split with the S4 (joint) flow sheet, matching Fig 3.10
-        b_n, b_f = split_flows(fl.get('S4_biomass+co2+water'), 'biomass')
-        c_n, c_f = split_flows(fl.get('S4_biomass+co2+water'), 'co2')
-        w_n, w_f = split_flows(fl.get('S4_biomass+co2+water'), 'water')
-        inc_bio = s1 - s0
-        inc_co2 = s3 - s1
-        inc_wat = s4 - s3
-        # scale each commodity increment by its near share
-        bio_near = inc_bio * (b_n / (b_n + b_f) if (b_n + b_f) else 0)
-        co2_near = inc_co2 * (c_n / (c_n + c_f) if (c_n + c_f) else 0)
-        wat_near = inc_wat * (w_n / (w_n + w_f) if (w_n + w_f) else 0)
-        rows_b.append({
-            'scenario': r['name'], 'S0_local': s0,
-            'bio_near': bio_near, 'bio_far': inc_bio - bio_near,
-            'co2_near': co2_near, 'co2_far': inc_co2 - co2_near,
-            'wat_near': wat_near, 'wat_far': inc_wat - wat_near,
-            'S1_biomass': s1, 'S2_co2': s2, 'S3_combined': s3, 'S4_combined': s4,
-        })
+        rows_b.append({'scenario': r['name'],
+                       **{k: r[k] for k in ('S0_local', 'bn', 'cn', 'wn', 'bf', 'cf',
+                                            'wf', 'far', 'S1_biomass', 'S2_co2',
+                                            'S3_combined', 'S4_combined')},
+                       **{k: r.get(k, np.nan) for k in ('S1_250km', 'S3_250km',
+                                                         'S4_250km')}})
     pd.DataFrame(rows_a).to_excel(xw, sheet_name='a_8class_share', index=False)
-    pd.DataFrame(rows_b).to_excel(xw, sheet_name='b_potential_stack', index=False)
+    pd.DataFrame(rows_b).rename(columns={
+        'bn': 'bio_near', 'cn': 'co2_near', 'wn': 'wat_near', 'bf': 'bio_far',
+        'cf': 'co2_far', 'wf': 'wat_far', 'far': 'beyond_250km'}).to_excel(
+        xw, sheet_name='b_potential_stack', index=False)
 
 # ---------------- figure ----------------
 # two rows: panel (a) on top, panel (b) below; legends on the right in one column
@@ -218,7 +214,7 @@ for cid in range(1, 9):
     bottoms = bottoms + share_mat[:, cid - 1]
 # solid separators on the x-axis: EFR group (x=1,2) and Biomass group (x=3,4)
 
-# label the top-3 classes of each scenario bar in black
+# label the top-3 classes of each scenario bar (white on dark fills)
 cum = np.cumsum(share_mat, axis=1)
 prev = np.concatenate([np.zeros((len(recs), 1)), cum[:, :-1]], axis=1)
 for i in range(len(recs)):
@@ -228,7 +224,8 @@ for i in range(len(recs)):
         if v >= 5.0:   # skip tiny segments to avoid clutter
             yc = prev[i, k] + v / 2.0
             ax_a.text(x[i], yc, f'{v:.0f}%', ha='center', va='center',
-                      fontsize=11, color='black', fontweight='bold', zorder=4)
+                      fontsize=11, color=_style.text_on(CLASS_COLORS[k + 1]),
+                      fontweight='bold', zorder=4)
 # panel (a) shares the x-axis labels with panel (b): hide its own tick labels
 # use the SAME tick positions and x-limits as panel (b) so the bars align
 ax_a.set_xticks(x)
@@ -248,10 +245,10 @@ bn = np.array([r['bn'] for r in recs]); bf = np.array([r['bf'] for r in recs])
 cn = np.array([r['cn'] for r in recs]); cf = np.array([r['cf'] for r in recs])
 wn = np.array([r['wn'] for r in recs]); wf = np.array([r['wf'] for r in recs])
 # col for each commodity: base colors, filled for near, same-color outline for far
-bio_col, co2_col, wat_col = '#7b3294', '#d7191c', '#2c7bb6'
+bio_col, co2_col, wat_col = _style.C_BIO, _style.C_CO2, _style.C_WAT
 EDGE_LW = 1.2
 # near (filled) segments: S0, biomass, co2, water
-ax_b.bar(x, s0s, 0.62, color='#40b948', edgecolor='#40b948', lw=EDGE_LW,
+ax_b.bar(x, s0s, 0.62, color=_style.C_S0, edgecolor=_style.C_S0, lw=EDGE_LW,
          label='Self-sufficient (S0)')
 b1 = s0s
 ax_b.bar(x, bn, 0.62, bottom=b1, color=bio_col, edgecolor=bio_col, lw=EDGE_LW,
@@ -270,23 +267,35 @@ ax_b.bar(x, cf, 0.62, bottom=b4 + bf, facecolor='none', edgecolor=co2_col, lw=ED
          label='CO$_2$, > 250 km')
 ax_b.bar(x, wf, 0.62, bottom=b4 + bf + cf, facecolor='none', edgecolor=wat_col, lw=EDGE_LW,
          label='water, > 250 km')
+far = np.array([r['far'] for r in recs])
+ax_b.bar(x, far, 0.62, bottom=b4 + bf + cf + wf, facecolor='none', edgecolor='#555555',
+         lw=EDGE_LW, label='additional, > 250 km')
 # absolute values (black) inside each segment; no total labels
 for i in range(len(recs)):
     segs = [
         (0, s0s[i]), (b1[i], bn[i]), (b2[i], cn[i]), (b3[i], wn[i]),
         (b4[i], bf[i]), (b4[i] + bf[i], cf[i]), (b4[i] + bf[i] + cf[i], wf[i]),
+        (b4[i] + bf[i] + cf[i] + wf[i], far[i]),
     ]
-    for bottom, h in segs:
+    seg_fill = [_style.C_S0, bio_col, co2_col, wat_col]   # outlined segments: none
+    for j, (bottom, h) in enumerate(segs):
         if h > 30:
             ax_b.text(i, bottom + h * 0.5, f'{h:.0f}',
                       ha='center', va='center', fontsize=12,
-                      color='black', fontweight='bold', zorder=4)
+                      color=_style.text_on(seg_fill[j]) if j < 4 else '#222222',
+                      fontweight='bold', zorder=4)
 ax_b.set_xticks(x); ax_b.set_xticklabels(names, rotation=90, ha='center', fontsize=16)
 ax_b.set_xlim(left=-1.0, right=len(recs))
 ax_b.set_ylim(0, 1800)
 ax_b.set_ylabel('BECCS potential (Mt CO$_2$ yr$^{-1}$)', fontsize=16)
-ax_b.legend(fontsize=13, ncol=1, loc='center left', bbox_to_anchor=(1.01, 0.5),
-            frameon=False, title='')
+# drop legend entries for segments that are empty in every scenario (with
+# hard-cap results the per-commodity '> 250 km' outlines are not used)
+_h, _l = ax_b.get_legend_handles_labels()
+_keep = {'biomass, > 250 km': bf.any(), 'CO$_2$, > 250 km': cf.any(),
+         'water, > 250 km': wf.any(), 'additional, > 250 km': far.any()}
+_hl = [(h, l) for h, l in zip(_h, _l) if _keep.get(l, True)]
+ax_b.legend([h for h, _ in _hl], [l for _, l in _hl], fontsize=13, ncol=1,
+            loc='center left', bbox_to_anchor=(1.01, 0.5), frameon=False, title='')
 ax_b.tick_params(labelsize=15)
 # group separators drawn BELOW the x-axis of panel (b), not inside the panels:
 # Baseline and the 250-km biomass (BIO250) each form their own group; then the

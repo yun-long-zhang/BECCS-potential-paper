@@ -24,6 +24,8 @@ import os
 import re
 import numpy as np
 import pandas as pd
+
+import _cols
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -60,12 +62,12 @@ OUT = os.path.join(OUT_DIR, 'Fig3_10_five_panel')
 # ---- commodity style: same hue, saturation encodes flow amount ----
 from matplotlib.colors import LinearSegmentedColormap as _LSC
 COMM = {
-    'biomass': dict(label='biomass', base='#7b3294',
-                    cmap=_LSC.from_list('bio', ['#efe1f6', '#7b3294'])),
-    'co2':     dict(label='CO$_2$', base='#d7191c',
-                    cmap=_LSC.from_list('co2', ['#fcd4d4', '#d7191c'])),
-    'water':   dict(label='water', base='#2c7bb6',
-                    cmap=_LSC.from_list('wat', ['#cde3f6', '#2c7bb6'])),
+    'biomass': dict(label='biomass', base=_style.C_BIO,
+                    cmap=_LSC.from_list('bio', ['#BFE6DA', _style.C_BIO])),
+    'co2':     dict(label='CO$_2$', base=_style.C_CO2,
+                    cmap=_LSC.from_list('co2', ['#F3CDB3', _style.C_CO2])),
+    'water':   dict(label='water', base=_style.C_WAT,
+                    cmap=_LSC.from_list('wat', ['#BFD9EC', _style.C_WAT])),
 }
 SCEN = {
     'S1_biomass': ('S1', 'Biomass transport'),
@@ -104,7 +106,7 @@ res = pd.read_excel(RES, sheet_name='city')
 # workbook; if that workbook has been reduced for release (no 经度/纬度 columns)
 # fall back to the standalone centroids file shipped alongside it.
 _wb = os.path.join(HERE, 'plant level analysis data.xlsx')
-df = pd.read_excel(_wb, sheet_name=os.environ.get('BECCS_SHEET', '市域内比较'))
+df = _cols.read_plants(_wb)
 df = df[df['序号'].notna()].copy()
 df['city'] = df['所在城市'].astype(str)
 if {'经度', '纬度'}.issubset(df.columns):
@@ -158,7 +160,7 @@ print('匹配:', len(matched), '/', len(res))
 lookup = dict(zip(matched['shape_city'], matched['S0_local_Mt_yr']))
 gdf['base'] = gdf['CITY'].map(lookup)
 
-cmap = LinearSegmentedColormap.from_list('pot', ["#ffffff", "#40b948"])
+cmap = _style.CMAP_SEQ
 vmax = float(res['S0_local_Mt_yr'].quantile(0.97))
 
 # flow tables
@@ -219,21 +221,21 @@ def _diverging(vals, neg_col, pos_col):
     lim = float(max(abs(s.min()) if len(s) else 1e-9,
                     abs(s.max()) if len(s) else 1e-9, 1e-9))
     cm = LinearSegmentedColormap.from_list(
-        'div', [neg_col, '#ffffff', pos_col])
+        'div', [neg_col, '#F7F7F7', pos_col])
     return cm, TwoSlopeNorm(vmin=-lim, vcenter=0.0, vmax=lim), lim
 
 
 # --- panel b: biomass NET flow (S1) ---
-# orange (net sender) -> white (0) -> pink (net receiver)
+# orange (net sender) -> grey-white (0) -> purple (net receiver), PuOr
 gdf['f_net_b'] = build_fill(flow_net_by_city(flows['S1_biomass']))
 cmap_flow_b, norm_flow_b, lim_b = _diverging(gdf['f_net_b'].values,
-                                             '#e08214', '#e7298a')
+                                             '#B35806', '#542788')
 
 # --- panel c: CO2 NET flow (S2) ---
-# orange (net sender) -> white (0) -> blue (net receiver)
+# orange (net sender) -> grey-white (0) -> purple (net receiver), PuOr
 gdf['f_net_c'] = build_fill(flow_net_by_city(flows['S2_co2']))
 cmap_flow_c, norm_flow_c, lim_c = _diverging(gdf['f_net_c'].values,
-                                             '#e08214', '#2c7bb6')
+                                             '#B35806', '#542788')
 
 # --- panel e: net emissions after the fully-coordinated scenario (S4) ---
 net_emis = net_emissions_by_city('S4_biomass+co2+water')
@@ -242,10 +244,10 @@ _net_vals = pd.Series(gdf['f_net'].dropna().values)
 NET_VMIN = float(min(_net_vals.min(), -1e-9))
 NET_VMAX = float(max(_net_vals.max(), 1e-9))
 net_norm = TwoSlopeNorm(vmin=NET_VMIN, vcenter=0.0, vmax=NET_VMAX)
-# yellow (net-negative, captures more than it emits) -> white (0) -> brown
+# blue (net-negative, captures more than it emits) -> grey-white (0) -> red
 # (residual emissions).  Zero sits at the MIDDLE of the colour ramp.
 cmap_net = LinearSegmentedColormap.from_list(
-    'netemis', ['#f0e442', '#ffffff', '#8c510a'])
+    'netemis', ['#2166AC', '#F7F7F7', '#B2182B'])
 
 print('面板b 生物质净流量: %.1f .. %.1f Mt/yr' % (-lim_b, lim_b))
 print('面板c CO2净流量:    %.1f .. %.1f Mt/yr' % (-lim_c, lim_c))
@@ -254,9 +256,8 @@ print('面板e 净排放: %.1f .. %.1f Mt/yr | 净负值城市 %d'
 
 # ---- export plot data ----
 with pd.ExcelWriter(OUT + '.xlsx') as xw:
-    res[['city', 'S0_local_Mt_yr', 'S1_biomass_Mt_yr', 'S2_co2_Mt_yr',
-         'S3_biomass+co2_Mt_yr', 'S4_biomass+co2+water_Mt_yr', 'W', 'S', 'B', 'G',
-         '经度', '纬度']].rename(columns={'经度': 'lon', '纬度': 'lat'}).to_excel(
+    res[['city'] + [c for c in res.columns if c.endswith('_Mt_yr')]
+        + ['W', 'S', 'B', 'G', '经度', '纬度']].rename(columns={'经度': 'lon', '纬度': 'lat'}).to_excel(
         xw, sheet_name='city', index=False)
     for s in SCEN:
         flows[s].to_excel(xw, sheet_name=s, index=False)
@@ -282,8 +283,7 @@ def load_waterfall_data():
               f'Water-bound\ncities ({n_wat})\n\u2212{wat_cut:.0f}',
               f'Storage-bound\ncities ({n_sto})\n\u2212{sto_cut:.0f}',
               f'S0 local\n{final:.0f}']
-    colors = ["#B95A83", "#5199a5",
-              '#8a8a8a', "#40b948"]
+    colors = [_style.C_BIO, _style.C_WAT, _style.C_CO2, _style.C_S0]
     return steps, labels, colors
 
 
@@ -298,7 +298,7 @@ fig = plt.figure(figsize=(18, 16.5))
 #   panel b : two stacked legends (volume / distance) in the blank upper-right
 #   panels c-f : colourbar in the upper-middle (see `cb_rect`)
 gs = fig.add_gridspec(3, 2, height_ratios=[1.0, 1.15, 1.15], wspace=0.06,
-                      hspace=0.14, left=0.035, right=0.985, top=0.975,
+                      hspace=0.19, left=0.035, right=0.985, top=0.975,
                       bottom=0.025)
 
 # ---------- (a) coordinated-potential bars (S0 .. S4) ----
@@ -322,8 +322,8 @@ DIST_TH = {'biomass': 250, 'co2': 250, 'water': 250}
 EDGE_LW = 1.2
 BAR_W = 0.45          # bar width for panel (a); narrowed so the in-panel
                       # y-axis numbers have clear space at the left edge
-S0_COL = '#40b948'
-COMM_COL = {'biomass': '#7b3294', 'co2': '#d7191c', 'water': '#2c7bb6'}
+S0_COL = _style.C_S0
+COMM_COL = {'biomass': _style.C_BIO, 'co2': _style.C_CO2, 'water': _style.C_WAT}
 scen_keys = ['S0_local', 'S1_biomass', 'S2_co2', 'S3_biomass+co2', 'S4_biomass+co2+water']
 scen_inc = {
     'S0_local': [],
@@ -344,75 +344,93 @@ def near_share_of(fl, comm):
     return sub.loc[sub['km'] <= DIST_TH[comm], 'Mt_yr'].sum() / tot
 
 
+# Within-250 km potential.  v2 results carry each coordinated scenario solved
+# with every flow capped at NEAR_KM as a hard constraint ('<scen>_250km'); the
+# solid part of each bar is that potential, split sequentially by commodity
+# (S0 -> +biomass -> +CO2 -> +water, all within the cap), and the outlined part
+# is what the unrestricted network adds on top.  Results without these
+# columns (the published version) fall back to the legacy split, which
+# re-weights each increment by the share of its flows on links <= 250 km.
+NEAR_KM = 250
+_near = {k: '%s_%dkm_Mt_yr' % (k, NEAR_KM) for k in scen_keys[1:]}
+HARD_CAP = all(c in res.columns for c in _near.values())
+FAR_COL = '#555555'
+if HARD_CAP:
+    nv = {k: float(res[c].sum()) for k, c in _near.items()}
+    near_seg = {
+        'S0_local': [],
+        'S1_biomass': [('biomass', nv['S1_biomass'] - s0)],
+        'S2_co2': [('co2', nv['S2_co2'] - s0)],
+        'S3_biomass+co2': [('biomass', nv['S1_biomass'] - s0),
+                           ('co2', nv['S3_biomass+co2'] - nv['S1_biomass'])],
+        'S4_biomass+co2+water': [('biomass', nv['S1_biomass'] - s0),
+                                 ('co2', nv['S3_biomass+co2'] - nv['S1_biomass']),
+                                 ('water', nv['S4_biomass+co2+water']
+                                  - nv['S3_biomass+co2'])],
+    }
+    far_seg = {k: (vals[i] - nv[k] if k in nv else 0.0)
+               for i, k in enumerate(scen_keys)}
+else:
+    near_seg, far_seg = {}, {}
+    for key in scen_keys:
+        fl = flows[key] if key != 'S0_local' else flows['S1_biomass']
+        near_seg[key] = [(c, inc * near_share_of(fl, c)) for c, inc in scen_inc[key]]
+        far_seg[key] = [(c, inc * (1 - near_share_of(fl, c))) for c, inc in scen_inc[key]]
+
 solid_top = {}          # top of the FILLED (within-250 km) part of each bar
 for i, key in enumerate(scen_keys):
-    fl = flows[key] if key != 'S0_local' else flows['S1_biomass']
-    # precompute near/far per commodity
-    seg = {comm: (inc * near_share_of(fl, comm), inc * (1 - near_share_of(fl, comm)))
-           for comm, inc in scen_inc[key]}
-    # S0 base (filled green)
     ax.bar(i, s0, BAR_W, color=S0_COL, edgecolor=S0_COL,
            linewidth=EDGE_LW, zorder=3)
-    # 1) all NEAR segments (filled) stacked directly above S0
     bottom = s0
-    for comm, _inc in scen_inc[key]:
-        near, _far = seg[comm]
-        if near > 0:
-            ax.bar(i, near, BAR_W, bottom=bottom, color=COMM_COL[comm],
+    for comm, h in near_seg[key]:                 # filled, within 250 km
+        if h > 0:
+            ax.bar(i, h, BAR_W, bottom=bottom, color=COMM_COL[comm],
                    edgecolor=COMM_COL[comm], linewidth=EDGE_LW, zorder=3)
-        bottom += near
+            if h > 70:
+                ax.text(i, bottom + h * 0.5, f'+{100 * h / s0:.0f}%', ha='center',
+                        va='center', fontsize=14, color='white',
+                        fontweight='bold', zorder=4)
+            elif h > 10:
+                # too thin for an in-bar label: put it beside the bar
+                ax.text(i + BAR_W / 2 + 0.04, bottom + h * 0.5,
+                        f'+{100 * h / s0:.0f}%', ha='left', va='center',
+                        fontsize=13, color=COMM_COL[comm],
+                        fontweight='bold', zorder=4)
+        bottom += max(h, 0.0)
     solid_top[key] = bottom
-    # 2) all FAR segments (outline only) stacked on top
-    bottom = s0 + sum(seg[c][0] for c, _ in scen_inc[key])
-    for comm, _inc in scen_inc[key]:
-        _near, far = seg[comm]
-        if far > 0:
-            ax.bar(i, far, BAR_W, bottom=bottom, facecolor='none',
-                   edgecolor=COMM_COL[comm], linewidth=EDGE_LW, zorder=3)
-        bottom += far
+    far_list = ([('far', far_seg[key])] if HARD_CAP else far_seg[key])
+    for comm, h in far_list:                      # outlined, beyond 250 km
+        if h > 0:
+            col = FAR_COL if comm == 'far' else COMM_COL[comm]
+            ax.bar(i, h, BAR_W, bottom=bottom, facecolor='none',
+                   edgecolor=col, linewidth=EDGE_LW, zorder=3)
+            if h > 25:
+                ax.text(i, bottom + h * 0.5, f'+{100 * h / s0:.0f}%', ha='center',
+                        va='center', fontsize=14, color=col,
+                        fontweight='bold', zorder=4)
+            bottom += h
 
 # value labels
 for i, v in enumerate(vals):
     ax.text(i, v + 14, f'{v:.0f}', ha='center', va='bottom',
             fontsize=14, fontweight='bold', color='#222222')
-    if i == 0:
-        continue
-    fl = flows[scen_keys[i]]
-    seg = {comm: (inc * near_share_of(fl, comm), inc * (1 - near_share_of(fl, comm)))
-           for comm, inc in scen_inc[scen_keys[i]]}
-    # near segment labels (filled, white text)
-    bottom = s0
-    for comm, _inc in scen_inc[scen_keys[i]]:
-        near, _far = seg[comm]
-        if near > 25:
-            ax.text(i, bottom + near * 0.5, f'+{100 * near / s0:.0f}%', ha='center',
-                    va='center', fontsize=14, color='white', fontweight='bold', zorder=4)
-        bottom += near
-    # far segment labels (outline, coloured text)
-    bottom = s0 + sum(seg[c][0] for c, _ in scen_inc[scen_keys[i]])
-    for comm, _inc in scen_inc[scen_keys[i]]:
-        _near, far = seg[comm]
-        if far > 25:
-            ax.text(i, bottom + far * 0.5, f'+{100 * far / s0:.0f}%', ha='center',
-                    va='center', fontsize=14, color=COMM_COL[comm], fontweight='bold', zorder=4)
-        bottom += far
 
 ax.set_xticks(np.arange(5))
-xt = ['S0:local', 'S1:biomass', 'S2:CO$_2$', 'S3:bio+CO$_2$', 'S4:bio+CO$_2$+water']
-ax.set_xticklabels(xt, fontsize=14)
+xt = ['S0\nlocal', 'S1\nbiomass', 'S2\nCO$_2$', 'S3\nbio+CO$_2$',
+      'S4\nbio+CO$_2$+water']
+ax.set_xticklabels(xt, fontsize=13)
 ax.set_ylabel('BECCS potential (Mt CO$_2$ yr$^{-1}$)', fontsize=14)
-ax.set_ylim(0, 1800)
+ax.set_ylim(0, 1650)          # top tick (1600) stays clear of the panel label
 # Asymmetric horizontal margin: the left needs slack for the in-panel y-axis
 # numbers and title, the right carries no annotation at all, so the bars run
 # close to the right spine.
-ax.set_xlim(-1.3, 4.45)
+ax.set_xlim(-0.6, 4.75)
 # y-axis placed INSIDE the panel: a negative pad pulls the tick numbers inwards
 # and the axis title is drawn just inside the left spine.  Nothing is drawn
 # outside the axes, so the two half-width panels can sit close together.
-ax.tick_params(axis='y', labelsize=15, direction='in', pad=-42)
-# Axis title placed in the gap between the tick numbers and the bars (measured
-# at ~0.117 of the axes width for this panel).
-ax.yaxis.set_label_coords(0.117, 0.5)
+# y-axis numbers and title sit OUTSIDE the panel (they overlapped the bars
+# when drawn inside); the axes box is narrowed below to make room.
+ax.tick_params(axis='y', labelsize=15)
 ax.tick_params(axis='x', labelsize=15)
 ax.set_title(' ',
              fontsize=16, pad=8)
@@ -435,13 +453,13 @@ ax.text((_bx0 + _bx1) / 2, _by + 14,
         'S3 = S4: no extra potential',
         ha='center', va='bottom', fontsize=12, color='#555555')
 ax.text((_bx0 + _bx1) / 2, _by - 40,
-        'within-250 km share  %.0f%% \u2192 %.0f%%' % (_s3_share, _s4_share),
+        'within 250 km  %.0f%% \u2192 %.0f%%' % (_s3_share, _s4_share),
         ha='center', va='top', fontsize=12, color='#555555')
 
 
 # ---------- (b) transport volume and distance (S1 .. S4) ----
 # For each coordinated scenario this panel shows the ACTUAL transported mass of
-# each commodity (grouped bars, left axis) and the corresponding volume-weighted
+# each commodity (grouped bars, left axis) and the corresponding mass-weighted
 # mean transport distance (lines, right axis).
 #
 # Physical masses (Mt yr-1).  The model works in Mt CO2-eq, so biomass and water
@@ -469,11 +487,13 @@ for k in TRANSPORT_SCEN:
     for comm in COMM_ORDER:
         sub = fl[fl['commodity'] == comm] if (not fl.empty and 'commodity' in fl.columns) else fl.iloc[0:0]
         # physical mass transported (Mt yr-1), not the CO2-equivalent potential
-        v = float(sub['Mt_yr'].sum()) * PHYS_FACTOR[comm]
-        vol[(k, comm)] = v
-        wdist[(k, comm)] = (float((sub['km'] * sub['Mt_yr']).sum())
-                            / float(sub['Mt_yr'].sum())
-                            if sub['Mt_yr'].sum() > 0 else 0.0)
+        # v2 flow tables carry the mass moved (phys_Mt); older ones only the
+        # CO2-equivalent, converted with the fleet-mean factors above
+        m = (sub['phys_Mt'] if 'phys_Mt' in sub.columns
+             else sub['Mt_yr'] * PHYS_FACTOR[comm])
+        vol[(k, comm)] = float(m.sum())
+        wdist[(k, comm)] = (float((sub['km'] * m).sum()) / float(m.sum())
+                            if m.sum() > 0 else 0.0)
 
 xb = np.arange(len(TRANSPORT_SCEN))
 # grouped (not stacked) bars: three commodities side by side within each scenario
@@ -490,9 +510,10 @@ for comm in COMM_ORDER:
     for xi, hi in zip(xs, h):
         bar_x[(round(xi, 6), comm)] = xi
         if hi > 0:
-            # values sit above each bar (they no longer fit inside)
-            axb.text(xi, hi + 45, '%.0f' % hi, ha='center', va='bottom',
-                     fontsize=13, color='#222222', fontweight='bold', zorder=4)
+            # value written inside the top of its bar, so it cannot collide
+            # with the distance markers/labels drawn over the bars
+            axb.text(xi, hi - 12, '%.0f' % hi, ha='center', va='top',
+                     fontsize=12, color='white', fontweight='bold', zorder=4)
     maxh = max(maxh, float(h.max()))
 
 axb.set_xticks(xb)
@@ -500,63 +521,49 @@ axb.set_xticklabels(TRANSPORT_LABEL, fontsize=15)
 axb.set_ylabel('Transported mass  (Mt yr$^{-1}$)', fontsize=15)
 # head-room: the two legends occupy the top band, the bar values sit just above
 # the bars, and the distance labels sit above their markers
-axb.set_ylim(0, maxh * 1.75)
-axb.set_xlim(-1.15, len(TRANSPORT_SCEN) - 1 + 1.15)
-# in-panel y-axis (left) -- same treatment as panel (a)
-axb.tick_params(axis='y', labelsize=15, direction='in', pad=-42)
-axb.yaxis.set_label_coords(0.126, 0.5)
+axb.set_ylim(0, maxh * 1.75)          # head-room for the legend
+axb.set_xlim(-0.6, len(TRANSPORT_SCEN) - 1 + 0.6)
+axb.tick_params(axis='y', labelsize=15)
 axb.tick_params(axis='x', labelsize=15)
 axb.set_title(' ', fontsize=16, pad=8)
 _style.panel_label(axb, 'b', fontsize=24)
 
-# mean transport distance on a twin axis, one line per commodity that flows
-axb2 = axb.twinx()
+# mean transport distance: written vertically above each bar in the
+# commodity colour.  (A twin distance axis with lines put the markers and their
+# labels on top of the bars and bar values, which could not be untangled.)
 for comm in COMM_ORDER:
-    # the line tracks the commodity's own bar, so it reads directly off that bar
-    xs = [xi + OFF[comm] for xi, k in zip(xb, TRANSPORT_SCEN) if vol[(k, comm)] > 0]
-    yy = [wdist[(k, comm)] for k in TRANSPORT_SCEN if vol[(k, comm)] > 0]
-    if not xs:
-        continue
-    axb2.plot(xs, yy, marker='o', markersize=9, linewidth=2.4,
-              color=COMM_COL[comm], markeredgecolor='white', markeredgewidth=1.4,
-              zorder=6, linestyle='-',
-              label={'biomass': 'biomass', 'co2': 'CO$_2$', 'water': 'water'}[comm])
-    for xi, yi in zip(xs, yy):
-        # uniform black labels.  Biomass sits to the LEFT of its marker because
-        # its distance value lands at the same height as the much taller
-        # adjacent CO2 bar's value label, which occupies the space to the right.
-        left = (comm == 'biomass')
-        axb2.annotate('%.0f' % yi, (xi, yi), textcoords='offset points',
-                      xytext=(-8, 4) if left else (7, 4),
-                      ha='right' if left else 'left', va='bottom', fontsize=13,
-                      color='#222222', fontweight='bold', zorder=7)
-axb2.set_ylim(0, max(600.0, max(
-    [wdist[(k, c)] for k in TRANSPORT_SCEN for c in COMM_ORDER]) * 1.95))
-# right-hand axis numbers drawn INSIDE the panel
-axb2.tick_params(axis='y', labelsize=15, direction='in', pad=-42)
-axb2.set_ylabel('average transported distance  (km)', fontsize=15)
-# title also placed inside the axes, in the gap left of the tick numbers.
-# Note: on this twin axis the label anchors at its LEFT edge, so the fraction
-# has to be smaller than the tick numbers' left extent, not larger.
-axb2.yaxis.set_label_coords(0.880, 0.5)
+    for xi, k in zip(xb, TRANSPORT_SCEN):
+        if vol[(k, comm)] > 0:
+            axb.text(xi + OFF[comm], vol[(k, comm)] + 18,
+                     '%.0f km' % wdist[(k, comm)], rotation=90,
+                     ha='center', va='bottom', fontsize=12,
+                     color=COMM_COL[comm], fontweight='bold', zorder=5)
 
 _h_vol = [mpatches.Patch(facecolor=COMM_COL[c], edgecolor='none',
                          label='%s  (%s)'
                          % ({'biomass': 'biomass', 'co2': 'CO$_2$', 'water': 'water'}[c],
                             PHYS_UNIT[c]))
           for c in COMM_ORDER]
-_h_dist = [Line2D([], [], color=COMM_COL[c], marker='o', markersize=9,
-                  linewidth=2.4, markeredgecolor='white', markeredgewidth=1.4,
-                  label={'biomass': 'biomass', 'co2': 'CO$_2$', 'water': 'water'}[c])
-           for c in COMM_ORDER]
-lg1 = axb.legend(handles=_h_vol, loc='lower center', bbox_to_anchor=(0.355, 0.645),
+lg1 = axb.legend(handles=_h_vol, loc='upper left', bbox_to_anchor=(0.02, 0.98),
                  frameon=True, framealpha=0.92, edgecolor='#cccccc', fontsize=14,
-                 handlelength=1.5, borderpad=0.5, title='volume', title_fontsize=14)
+                 handlelength=1.5, borderpad=0.5,
+                 title='Transported mass (number in bar)', title_fontsize=14)
 lg1.set_zorder(10)
-lg2 = axb2.legend(handles=_h_dist, loc='lower center', bbox_to_anchor=(0.655, 0.645),
-                  frameon=True, framealpha=0.92, edgecolor='#cccccc', fontsize=14,
-                  handlelength=2.0, borderpad=0.5, title='distance', title_fontsize=14)
-lg2.set_zorder(10)
+axb.text(0.02, 0.62, 'Number above bar: mass-weighted\nmean transport distance (km)',
+         transform=axb.transAxes, ha='left', va='top', fontsize=13,
+         color='#444444')
+
+# The y-axes of (a) and (b) are drawn outside their boxes, so both boxes are
+# narrowed (maps below keep the full grid).  Panel labels are shifted back so
+# 'a'/'b' stay aligned with 'c'/'d'.
+for _ax, _l, _r, _lab in ((ax, 0.040, 0.004, 'a'), (axb, 0.042, 0.004, 'b')):
+    _p = _ax.get_position()
+    _ax.set_position([_p.x0 + _l, _p.y0, _p.width - _l - _r, _p.height])
+for _t in list(ax.texts) + list(axb.texts):
+    if _t.get_text() in ('a', 'b') and _t.get_fontweight() == 'bold':
+        _t.remove()
+_style.panel_label(ax, 'a', fontsize=24, dx=-0.040 / ax.get_position().width)
+_style.panel_label(axb, 'b', fontsize=24, dx=-0.042 / axb.get_position().width)
 
 
 # ---------- helper: draw one scenario map ----------
@@ -684,20 +691,21 @@ draw_scenario(fig.add_subplot(gs[2, 1]), 'S4_biomass+co2+water', 'f',
 # self-explanatory once the fill scale is labelled.
 # ---------------------------------------------------------------------------
 
-# panel (a): resource colour key.  Only the two commodities that actually
-# contribute a visible segment are listed -- the S4 water increment is zero, so
-# a water key would point at nothing.  Six entries laid out over two rows.
-handles_a = [
-    mpatches.Patch(facecolor=S0_COL, edgecolor='none', label='S0 local'),
-    mpatches.Patch(facecolor=COMM_COL['biomass'], edgecolor='none',
-                   label='biomass \u2264 250 km'),
-    mpatches.Patch(facecolor='none', edgecolor=COMM_COL['biomass'],
-                   label='biomass > 250 km'),
-    mpatches.Patch(facecolor=COMM_COL['co2'], edgecolor='none',
-                   label='CO$_2$ \u2264 250 km'),
-    mpatches.Patch(facecolor='none', edgecolor=COMM_COL['co2'],
-                   label='CO$_2$ > 250 km'),
-]
+# panel (a): resource colour key.  With hard-cap results the solid segments
+# are per commodity and the outline is a single "beyond 250 km" segment; the
+# legacy split outlines each commodity separately.
+handles_a = [mpatches.Patch(facecolor=S0_COL, edgecolor='none', label='S0 local')]
+_comms = ['biomass', 'co2', 'water'] if HARD_CAP else ['biomass', 'co2']
+for c in _comms:
+    _lab = {'biomass': 'biomass', 'co2': 'CO$_2$', 'water': 'water'}[c]
+    handles_a.append(mpatches.Patch(facecolor=COMM_COL[c], edgecolor='none',
+                                    label='%s \u2264 250 km' % _lab))
+    if not HARD_CAP:
+        handles_a.append(mpatches.Patch(facecolor='none', edgecolor=COMM_COL[c],
+                                        label='%s > 250 km' % _lab))
+if HARD_CAP:
+    handles_a.append(mpatches.Patch(facecolor='none', edgecolor=FAR_COL,
+                                    label='additional, > 250 km'))
 ax.legend(handles=handles_a, loc='upper left', bbox_to_anchor=(0.205, 0.995),
           ncol=1, frameon=True, framealpha=0.92, edgecolor='#cccccc',
           fontsize=15, handlelength=1.6, labelspacing=0.32,

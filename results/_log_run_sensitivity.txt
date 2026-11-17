@@ -1,0 +1,1707 @@
+
+======================================================================
+SCENARIO: EFR20  (Environmental flow 20%)
+  params: {'BECCS_EFR': '0.20', 'BECCS_LIFE': '20', 'BECCS_BIO_FACTOR': '1.0', 'label': 'Environmental flow 20%'}
+  folder: ../results_v2_new/sensitivity_results/EFR20
+======================================================================
+    >>> 1_compute_aggregate_city.py: python 1_compute_aggregate_city.py
+water: new basis (ChinaWR TWR + HSWUD, plant Thiessen) -> 2171 / 2171 plants matched
+电厂数: 2171, 地级市数: 304
+数据来源分布:
+数据来源
+ChinaWR+HSWUD(plant Thiessen)    304
+
+地级市级 总压 WSR (EFR 20/37/50/80):
+  EFR20: WSR>1 = 24.3% | 中位 0.553
+  EFR00: WSR>1 = 18.4% | 中位 0.353
+  EFR37: WSR>1 = 33.6% | 中位 0.723
+  EFR50: WSR>1 = 38.8% | 中位 0.853
+  EFR80: WSR>1 = 66.8% | 中位 1.153
+
+水资源口径:
+  新 water_thiessen_cityclip.xlsx | 电厂级 R=R_亿m3, U=U_竞争_亿m3 (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值)
+  城市值 = 本市各电厂自身值之和(非整市总量)
+  R 总和=16084 亿m3   U 总和=3259 亿m3
+
+市级 BCR/SER:
+  BCR_city>1: 13.5% | SER_city>1: 25.0%
+
+电厂级 vs 城市级 (三比例):
+                电厂级       城市级(按城市)       城市级(按电厂)
+  BCR         30.0%          13.5%           6.6%
+  SER         17.5%          25.0%          26.5%
+  WSR50       49.1%          38.8%          51.7%
+  注: 电厂级用各厂自有资源; 城市级=同市各厂资源/需求分别求和后相除
+
+saved: ../results_v2_new/sensitivity_results/EFR20/plant_city_hswud_aggregated.xlsx
+    >>> 4_compute_beccs_potential.py: python 4_compute_beccs_potential.py
+plants: 2171 | cities: 304
+national: storage 635 | water 4048 | biomass 1035 Mt/yr
+=== final annual BECCS potential (min of three limits; biogenic C only; fixed generation) ===
+  national: 332 Mt CO2/yr
+
+limiting resource (cities):
+limiting
+sto_Mt_yr    238
+bio_Mt_yr     43
+wat_Mt_yr     23
+
+top 10 cities by potential:
+city    GW  sto_Mt_yr  wat_Mt_yr  bio_Mt_yr  BECCS_Mt_yr
+  昌吉 28.60      37.14     136.59       4.95        25.15
+ 哈尔滨  4.39      21.81      22.57      17.99        21.81
+  唐山  9.00      20.37      19.13       6.19        12.33
+  重庆 15.25      11.54      74.68      20.11        11.54
+  南阳  4.48      11.40      20.64      20.34        11.40
+  潍坊  5.96      10.92      27.86      11.11        10.92
+  榆林 22.36      10.92     108.93       5.56        10.79
+  晋中  6.17      14.35      30.71       2.21         9.89
+  大庆  2.45      12.46       9.78       4.01         9.07
+ 阿克苏  2.04       8.32      10.43       6.73         8.32
+
+saved ../results_v2_new/sensitivity_results/EFR20/BECCS_potential_plant.xlsx & ../results_v2_new/sensitivity_results/EFR20/BECCS_potential_city.xlsx
+    >>> 5_optimize_beccs_multi.py: python 5_optimize_beccs_multi.py
+S0_local: 360.855 Mt/yr  (bio=0.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.00 bn$/yr
+S1_biomass: 1145.976 Mt/yr  (bio=788.4, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=53.93 bn$/yr
+S2_co2: 883.245 Mt/yr  (bio=0.0, co2=522.4, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=4.97 bn$/yr
+S3_biomass+co2: 1145.976 Mt/yr  (bio=262.7, co2=639.5, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=8.69 bn$/yr
+S4_biomass+co2+water: 1145.976 Mt/yr  (bio=167.4, co2=639.0, wat=112.3 Mt CO2-eq / 254 Mt water)  cost=7.96 bn$/yr
+S1_biomass_250km: 667.954 Mt/yr  (bio=315.7, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=3.12 bn$/yr
+S2_co2_250km: 658.814 Mt/yr  (bio=0.0, co2=313.4, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.55 bn$/yr
+S3_biomass+co2_250km: 1016.008 Mt/yr  (bio=389.8, co2=519.8, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=6.93 bn$/yr
+S4_biomass+co2+water_250km: 1016.150 Mt/yr  (bio=293.5, co2=521.6, wat=110.7 Mt CO2-eq / 250 Mt water)  cost=6.19 bn$/yr
+
+--- national BECCS potential by scenario (Mt/yr) ---
+                  scenario  total_Mt_yr  biomass_transport  co2_transport  water_transport  water_transport_Mt_water
+                  S0_local   360.855132           0.000000       0.000000         0.000000                  0.000000
+                S1_biomass  1145.976395         788.447158       0.000000         0.000000                  0.000000
+                    S2_co2   883.245078           0.000000     522.389945         0.000000                  0.000000
+            S3_biomass+co2  1145.976392         262.731264     639.497288         0.000000                  0.000000
+      S4_biomass+co2+water  1145.976391         167.397064     638.995301       112.282259                253.752101
+          S1_biomass_250km   667.953721         315.732914       0.000000         0.000000                  0.000000
+              S2_co2_250km   658.813542           0.000000     313.440121         0.000000                  0.000000
+      S3_biomass+co2_250km  1016.007903         389.837163     519.847984         0.000000                  0.000000
+S4_biomass+co2+water_250km  1016.149697         293.515035     521.551292       110.722103                249.751196
+
+saved ../results_v2_new/sensitivity_results/EFR20/BECCS_scenarios_summary.xlsx & ../results_v2_new/sensitivity_results/EFR20/BECCS_scenario_city.xlsx & ../results_v2_new/sensitivity_results/EFR20/BECCS_coordination_result.xlsx
+    >>> 3_export_8class.py: python 3_export_8class.py
+saved: ../results_v2_new/sensitivity_results/EFR20/Fig3_6_prefecture_8class.xlsx
+saved: ../results_v2_new/sensitivity_results/EFR20/prefecture_8class.csv
+
+=== eight-class state distribution ===
+             class  n_cities    cap_GW     emis_Mt  emis_pct   cap_pct  city_pct  class_id
+bio+sto+water-rich        14   5.93650   19.056906  0.443614  0.527925  4.605263         1
+       water-short         1   2.27900    8.004131  0.186323  0.202668  0.328947         2
+     bio+sto-short       153 562.15384 2090.782910 48.670031 49.991574 50.328947         3
+         bio-short        39 144.40650  570.100364 13.271011 12.841873 12.828947         4
+         sto-short        24  12.68944   47.570159  1.107356  1.128455  7.894737         5
+   bio+water-short        22 100.90150  406.278337  9.457500  8.973033  7.236842         6
+   sto+water-short         2   0.71360    2.736686  0.063706  0.063459  0.657895         7
+            vacuum        49 295.41680 1151.302814 26.800460 26.271013 16.118421         8
+
+======================================================================
+SCENARIO: EFR80  (Environmental flow 80%)
+  params: {'BECCS_EFR': '0.80', 'BECCS_LIFE': '20', 'BECCS_BIO_FACTOR': '1.0', 'label': 'Environmental flow 80%'}
+  folder: ../results_v2_new/sensitivity_results/EFR80
+======================================================================
+    >>> 1_compute_aggregate_city.py: python 1_compute_aggregate_city.py
+water: new basis (ChinaWR TWR + HSWUD, plant Thiessen) -> 2171 / 2171 plants matched
+电厂数: 2171, 地级市数: 304
+数据来源分布:
+数据来源
+ChinaWR+HSWUD(plant Thiessen)    304
+
+地级市级 总压 WSR (EFR 20/37/50/80):
+  EFR20: WSR>1 = 24.3% | 中位 0.553
+  EFR00: WSR>1 = 18.4% | 中位 0.353
+  EFR37: WSR>1 = 33.6% | 中位 0.723
+  EFR50: WSR>1 = 38.8% | 中位 0.853
+  EFR80: WSR>1 = 66.8% | 中位 1.153
+
+水资源口径:
+  新 water_thiessen_cityclip.xlsx | 电厂级 R=R_亿m3, U=U_竞争_亿m3 (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值)
+  城市值 = 本市各电厂自身值之和(非整市总量)
+  R 总和=16084 亿m3   U 总和=3259 亿m3
+
+市级 BCR/SER:
+  BCR_city>1: 13.5% | SER_city>1: 25.0%
+
+电厂级 vs 城市级 (三比例):
+                电厂级       城市级(按城市)       城市级(按电厂)
+  BCR         30.0%          13.5%           6.6%
+  SER         17.5%          25.0%          26.5%
+  WSR50       49.1%          38.8%          51.7%
+  注: 电厂级用各厂自有资源; 城市级=同市各厂资源/需求分别求和后相除
+
+saved: ../results_v2_new/sensitivity_results/EFR80/plant_city_hswud_aggregated.xlsx
+    >>> 4_compute_beccs_potential.py: python 4_compute_beccs_potential.py
+plants: 2171 | cities: 304
+national: storage 635 | water 1954 | biomass 1035 Mt/yr
+=== final annual BECCS potential (min of three limits; biogenic C only; fixed generation) ===
+  national: 95 Mt CO2/yr
+
+limiting resource (cities):
+limiting
+sto_Mt_yr    202
+wat_Mt_yr     81
+bio_Mt_yr     21
+
+top 10 cities by potential:
+city    GW  sto_Mt_yr  wat_Mt_yr  bio_Mt_yr  BECCS_Mt_yr
+  唐山  9.00      20.37      19.13       6.19        12.33
+  重庆 15.25      11.54      73.32      20.11        11.08
+锡林郭勒 13.75      19.28      67.13       2.33         7.38
+  榆林 22.36      10.92      77.67       5.56         7.11
+巴音郭楞  1.83       5.60       9.05       2.81         5.01
+  沧州  5.36      26.20      12.58       4.95         4.95
+  天津 12.44      35.95      17.04       4.14         4.64
+  六安  1.32       5.61       5.61       4.51         4.51
+  达州  1.22       4.18       6.33       4.03         4.16
+鄂尔多斯 25.75      18.63     116.56       0.92         3.76
+
+saved ../results_v2_new/sensitivity_results/EFR80/BECCS_potential_plant.xlsx & ../results_v2_new/sensitivity_results/EFR80/BECCS_potential_city.xlsx
+    >>> 5_optimize_beccs_multi.py: python 5_optimize_beccs_multi.py
+S0_local: 128.420 Mt/yr  (bio=0.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.00 bn$/yr
+S1_biomass: 536.982 Mt/yr  (bio=408.6, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=15.57 bn$/yr
+S2_co2: 445.376 Mt/yr  (bio=0.0, co2=317.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=3.72 bn$/yr
+S3_biomass+co2: 1145.976 Mt/yr  (bio=701.5, co2=686.9, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=27.90 bn$/yr
+S4_biomass+co2+water: 1145.976 Mt/yr  (bio=333.9, co2=668.2, wat=517.1 Mt CO2-eq / 1360 Mt water)  cost=12.28 bn$/yr
+S1_biomass_250km: 239.257 Mt/yr  (bio=110.8, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.19 bn$/yr
+S2_co2_250km: 260.102 Mt/yr  (bio=0.0, co2=145.1, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.74 bn$/yr
+S3_biomass+co2_250km: 567.583 Mt/yr  (bio=363.9, co2=359.1, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=6.25 bn$/yr
+S4_biomass+co2+water_250km: 990.475 Mt/yr  (bio=604.5, co2=576.3, wat=516.4 Mt CO2-eq / 4276 Mt water)  cost=15.02 bn$/yr
+
+--- national BECCS potential by scenario (Mt/yr) ---
+                  scenario  total_Mt_yr  biomass_transport  co2_transport  water_transport  water_transport_Mt_water
+                  S0_local   128.419866           0.000000       0.000000         0.000000                  0.000000
+                S1_biomass   536.982385         408.562516       0.000000         0.000000                  0.000000
+                    S2_co2   445.376364           0.000000     316.956498         0.000000                  0.000000
+            S3_biomass+co2  1145.976393         701.455816     686.941622         0.000000                  0.000000
+      S4_biomass+co2+water  1145.976393         333.927341     668.184906       517.142731               1360.214684
+          S1_biomass_250km   239.257074         110.837207       0.000000         0.000000                  0.000000
+              S2_co2_250km   260.101764           0.000000     145.062893         0.000000                  0.000000
+      S3_biomass+co2_250km   567.582985         363.878590     359.098623         0.000000                  0.000000
+S4_biomass+co2+water_250km   990.475111         604.512286     576.258598       516.365385               4275.973474
+
+saved ../results_v2_new/sensitivity_results/EFR80/BECCS_scenarios_summary.xlsx & ../results_v2_new/sensitivity_results/EFR80/BECCS_scenario_city.xlsx & ../results_v2_new/sensitivity_results/EFR80/BECCS_coordination_result.xlsx
+    >>> 3_export_8class.py: python 3_export_8class.py
+saved: ../results_v2_new/sensitivity_results/EFR80/Fig3_6_prefecture_8class.xlsx
+saved: ../results_v2_new/sensitivity_results/EFR80/prefecture_8class.csv
+
+=== eight-class state distribution ===
+             class  n_cities    cap_GW     emis_Mt  emis_pct   cap_pct  city_pct  class_id
+bio+sto+water-rich         3   0.76200    2.283850  0.053164  0.067764  0.986842         1
+       water-short        12   7.45350   24.777187  0.576773  0.662830  3.947368         2
+     bio+sto-short        62 170.94067  577.138984 13.434858 15.201521 20.394737         3
+         bio-short        15  37.47880  155.056881  3.609472  3.332939  4.934211         4
+         sto-short        21  10.64544   40.487417  0.942481  0.946684  6.907895         5
+   bio+water-short        46 207.82920  821.321819 19.119038 18.481967 15.131579         6
+   sto+water-short         5   2.75760    9.819428  0.228580  0.245230  1.644737         7
+            vacuum       140 686.62997 2664.946740 62.035632 61.061066 46.052632         8
+
+======================================================================
+SCENARIO: BIO25  (Biomass 25% available)
+  params: {'BECCS_EFR': '0.50', 'BECCS_LIFE': '20', 'BECCS_BIO_FACTOR': '0.25', 'label': 'Biomass 25% available'}
+  folder: ../results_v2_new/sensitivity_results/BIO25
+======================================================================
+    >>> 1_compute_aggregate_city.py: python 1_compute_aggregate_city.py
+water: new basis (ChinaWR TWR + HSWUD, plant Thiessen) -> 2171 / 2171 plants matched
+电厂数: 2171, 地级市数: 304
+数据来源分布:
+数据来源
+ChinaWR+HSWUD(plant Thiessen)    304
+
+地级市级 总压 WSR (EFR 20/37/50/80):
+  EFR20: WSR>1 = 24.3% | 中位 0.553
+  EFR00: WSR>1 = 18.4% | 中位 0.353
+  EFR37: WSR>1 = 33.6% | 中位 0.723
+  EFR50: WSR>1 = 38.8% | 中位 0.853
+  EFR80: WSR>1 = 66.8% | 中位 1.153
+
+水资源口径:
+  新 water_thiessen_cityclip.xlsx | 电厂级 R=R_亿m3, U=U_竞争_亿m3 (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值)
+  城市值 = 本市各电厂自身值之和(非整市总量)
+  R 总和=16084 亿m3   U 总和=3259 亿m3
+
+市级 BCR/SER:
+  BCR_city>1: 5.6% | SER_city>1: 25.0%
+
+电厂级 vs 城市级 (三比例):
+                电厂级       城市级(按城市)       城市级(按电厂)
+  BCR         17.8%           5.6%           1.5%
+  SER         17.5%          25.0%          26.5%
+  WSR50       49.1%          38.8%          51.7%
+  注: 电厂级用各厂自有资源; 城市级=同市各厂资源/需求分别求和后相除
+
+saved: ../results_v2_new/sensitivity_results/BIO25/plant_city_hswud_aggregated.xlsx
+    >>> 4_compute_beccs_potential.py: python 4_compute_beccs_potential.py
+plants: 2171 | cities: 304
+national: storage 635 | water 3090 | biomass 276 Mt/yr
+=== final annual BECCS potential (min of three limits; biogenic C only; fixed generation) ===
+  national: 131 Mt CO2/yr
+
+limiting resource (cities):
+limiting
+sto_Mt_yr    211
+bio_Mt_yr     53
+wat_Mt_yr     40
+
+top 10 cities by potential:
+city    GW  sto_Mt_yr  wat_Mt_yr  bio_Mt_yr  BECCS_Mt_yr
+ 哈尔滨  4.39      21.81      22.57       4.50        17.92
+  重庆 15.25      11.54      74.68       5.03        11.54
+  南阳  4.48      11.40      19.30       5.08         8.03
+  榆林 22.36      10.92     108.93       1.39         6.57
+  绥化  1.29       6.49       6.49       4.29         6.49
+ 驻马店  1.32       6.70       6.80       2.00         3.99
+  荆州  2.30       6.38      10.82       1.14         3.97
+  吕梁  6.59       5.25      33.26       0.98         3.83
+  晋中  6.17      14.35      30.71       0.55         3.18
+  唐山  9.00      20.37      19.13       1.55         3.09
+
+saved ../results_v2_new/sensitivity_results/BIO25/BECCS_potential_plant.xlsx & ../results_v2_new/sensitivity_results/BIO25/BECCS_potential_city.xlsx
+    >>> 5_optimize_beccs_multi.py: python 5_optimize_beccs_multi.py
+S0_local: 83.121 Mt/yr  (bio=0.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.00 bn$/yr
+S1_biomass: 286.494 Mt/yr  (bio=203.4, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=3.72 bn$/yr
+S2_co2: 200.230 Mt/yr  (bio=0.0, co2=117.1, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.14 bn$/yr
+S3_biomass+co2: 286.494 Mt/yr  (bio=86.3, co2=146.1, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=2.11 bn$/yr
+S4_biomass+co2+water: 286.494 Mt/yr  (bio=35.3, co2=148.2, wat=63.1 Mt CO2-eq / 177 Mt water)  cost=1.82 bn$/yr
+S1_biomass_250km: 215.586 Mt/yr  (bio=136.7, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.56 bn$/yr
+S2_co2_250km: 147.748 Mt/yr  (bio=0.0, co2=67.4, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.34 bn$/yr
+S3_biomass+co2_250km: 265.381 Mt/yr  (bio=119.3, co2=129.8, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.92 bn$/yr
+S4_biomass+co2+water_250km: 266.072 Mt/yr  (bio=73.3, co2=130.4, wat=62.4 Mt CO2-eq / 190 Mt water)  cost=1.65 bn$/yr
+
+--- national BECCS potential by scenario (Mt/yr) ---
+                  scenario  total_Mt_yr  biomass_transport  co2_transport  water_transport  water_transport_Mt_water
+                  S0_local    83.120801           0.000000       0.000000         0.000000                  0.000000
+                S1_biomass   286.494097         203.373297       0.000000         0.000000                  0.000000
+                    S2_co2   200.230407           0.000000     117.109606         0.000000                  0.000000
+            S3_biomass+co2   286.494098          86.263619     146.116745         0.000000                  0.000000
+      S4_biomass+co2+water   286.494098          35.284647     148.161648        63.076130                177.484155
+          S1_biomass_250km   215.585674         136.710856       0.000000         0.000000                  0.000000
+              S2_co2_250km   147.747801           0.000000      67.350785         0.000000                  0.000000
+      S3_biomass+co2_250km   265.381077         119.295679     129.847125         0.000000                  0.000000
+S4_biomass+co2+water_250km   266.072031          73.274822     130.358350        62.381822                189.813210
+
+saved ../results_v2_new/sensitivity_results/BIO25/BECCS_scenarios_summary.xlsx & ../results_v2_new/sensitivity_results/BIO25/BECCS_scenario_city.xlsx & ../results_v2_new/sensitivity_results/BIO25/BECCS_coordination_result.xlsx
+    >>> 3_export_8class.py: python 3_export_8class.py
+saved: ../results_v2_new/sensitivity_results/BIO25/Fig3_6_prefecture_8class.xlsx
+saved: ../results_v2_new/sensitivity_results/BIO25/prefecture_8class.csv
+
+=== eight-class state distribution ===
+             class  n_cities    cap_GW     emis_Mt  emis_pct   cap_pct  city_pct  class_id
+bio+sto+water-rich         3   0.11100    0.418216  0.009735  0.009871  0.986842         1
+     bio+sto-short       143 460.18268 1692.585540 39.400643 40.923418 47.039474         3
+         bio-short        35  76.71930  294.575314  6.857235  6.822543 11.513158         4
+         sto-short         5   0.11380    0.311392  0.007249  0.010120  1.644737         5
+   bio+water-short        38 176.69320  708.446207 16.491477 15.713085 12.500000         6
+   sto+water-short         1   0.00600    0.026300  0.000612  0.000534  0.328947         7
+            vacuum        79 410.67120 1599.469337 37.233049 36.520430 25.986842         8
+
+======================================================================
+SCENARIO: BIO50  (Biomass 50% available)
+  params: {'BECCS_EFR': '0.50', 'BECCS_LIFE': '20', 'BECCS_BIO_FACTOR': '0.50', 'label': 'Biomass 50% available'}
+  folder: ../results_v2_new/sensitivity_results/BIO50
+======================================================================
+    >>> 1_compute_aggregate_city.py: python 1_compute_aggregate_city.py
+water: new basis (ChinaWR TWR + HSWUD, plant Thiessen) -> 2171 / 2171 plants matched
+电厂数: 2171, 地级市数: 304
+数据来源分布:
+数据来源
+ChinaWR+HSWUD(plant Thiessen)    304
+
+地级市级 总压 WSR (EFR 20/37/50/80):
+  EFR20: WSR>1 = 24.3% | 中位 0.553
+  EFR00: WSR>1 = 18.4% | 中位 0.353
+  EFR37: WSR>1 = 33.6% | 中位 0.723
+  EFR50: WSR>1 = 38.8% | 中位 0.853
+  EFR80: WSR>1 = 66.8% | 中位 1.153
+
+水资源口径:
+  新 water_thiessen_cityclip.xlsx | 电厂级 R=R_亿m3, U=U_竞争_亿m3 (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值)
+  城市值 = 本市各电厂自身值之和(非整市总量)
+  R 总和=16084 亿m3   U 总和=3259 亿m3
+
+市级 BCR/SER:
+  BCR_city>1: 8.2% | SER_city>1: 25.0%
+
+电厂级 vs 城市级 (三比例):
+                电厂级       城市级(按城市)       城市级(按电厂)
+  BCR         24.4%           8.2%           3.5%
+  SER         17.5%          25.0%          26.5%
+  WSR50       49.1%          38.8%          51.7%
+  注: 电厂级用各厂自有资源; 城市级=同市各厂资源/需求分别求和后相除
+
+saved: ../results_v2_new/sensitivity_results/BIO50/plant_city_hswud_aggregated.xlsx
+    >>> 4_compute_beccs_potential.py: python 4_compute_beccs_potential.py
+plants: 2171 | cities: 304
+national: storage 635 | water 3090 | biomass 541 Mt/yr
+=== final annual BECCS potential (min of three limits; biogenic C only; fixed generation) ===
+  national: 181 Mt CO2/yr
+
+limiting resource (cities):
+limiting
+sto_Mt_yr    217
+bio_Mt_yr     47
+wat_Mt_yr     40
+
+top 10 cities by potential:
+city    GW  sto_Mt_yr  wat_Mt_yr  bio_Mt_yr  BECCS_Mt_yr
+ 哈尔滨  4.39      21.81      22.57       9.00        21.81
+  重庆 15.25      11.54      74.68      10.05        11.54
+  南阳  4.48      11.40      19.30      10.17        11.40
+  榆林 22.36      10.92     108.93       2.78         9.34
+ 驻马店  1.32       6.70       6.80       3.99         6.70
+  绥化  1.29       6.49       6.49       6.49         6.49
+  唐山  9.00      20.37      19.13       3.09         6.19
+  晋中  6.17      14.35      30.71       1.11         5.58
+  荆州  2.30       6.38      10.82       2.28         5.19
+ 双鸭山  2.97       6.06      14.56       4.86         5.12
+
+saved ../results_v2_new/sensitivity_results/BIO50/BECCS_potential_plant.xlsx & ../results_v2_new/sensitivity_results/BIO50/BECCS_potential_city.xlsx
+    >>> 5_optimize_beccs_multi.py: python 5_optimize_beccs_multi.py
+S0_local: 154.712 Mt/yr  (bio=0.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.00 bn$/yr
+S1_biomass: 572.988 Mt/yr  (bio=418.3, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=12.83 bn$/yr
+S2_co2: 389.998 Mt/yr  (bio=0.0, co2=235.3, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=2.28 bn$/yr
+S3_biomass+co2: 572.988 Mt/yr  (bio=183.0, co2=297.2, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=4.58 bn$/yr
+S4_biomass+co2+water: 572.988 Mt/yr  (bio=80.9, co2=303.9, wat=121.7 Mt CO2-eq / 349 Mt water)  cost=3.90 bn$/yr
+S1_biomass_250km: 396.717 Mt/yr  (bio=253.3, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=3.10 bn$/yr
+S2_co2_250km: 283.087 Mt/yr  (bio=0.0, co2=135.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.67 bn$/yr
+S3_biomass+co2_250km: 523.335 Mt/yr  (bio=257.1, co2=262.1, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=4.11 bn$/yr
+S4_biomass+co2+water_250km: 526.927 Mt/yr  (bio=159.8, co2=265.7, wat=116.5 Mt CO2-eq / 403 Mt water)  cost=3.53 bn$/yr
+
+--- national BECCS potential by scenario (Mt/yr) ---
+                  scenario  total_Mt_yr  biomass_transport  co2_transport  water_transport  water_transport_Mt_water
+                  S0_local   154.711771           0.000000       0.000000         0.000000                  0.000000
+                S1_biomass   572.988195         418.276423       0.000000         0.000000                  0.000000
+                    S2_co2   389.998243           0.000000     235.286471         0.000000                  0.000000
+            S3_biomass+co2   572.988194         182.989917     297.247636         0.000000                  0.000000
+      S4_biomass+co2+water   572.988195          80.910628     303.945162       121.669296                348.608583
+          S1_biomass_250km   396.717007         253.314263       0.000000         0.000000                  0.000000
+              S2_co2_250km   283.086999           0.000000     134.993596         0.000000                  0.000000
+      S3_biomass+co2_250km   523.335083         257.055613     262.131791         0.000000                  0.000000
+S4_biomass+co2+water_250km   526.926773         159.811989     265.669839       116.469482                402.727749
+
+saved ../results_v2_new/sensitivity_results/BIO50/BECCS_scenarios_summary.xlsx & ../results_v2_new/sensitivity_results/BIO50/BECCS_scenario_city.xlsx & ../results_v2_new/sensitivity_results/BIO50/BECCS_coordination_result.xlsx
+    >>> 3_export_8class.py: python 3_export_8class.py
+saved: ../results_v2_new/sensitivity_results/BIO50/Fig3_6_prefecture_8class.xlsx
+saved: ../results_v2_new/sensitivity_results/BIO50/prefecture_8class.csv
+
+=== eight-class state distribution ===
+             class  n_cities    cap_GW     emis_Mt  emis_pct   cap_pct  city_pct  class_id
+bio+sto+water-rich         7   0.54900    1.914495  0.044566  0.048822  2.302632         1
+       water-short         1   0.03150    0.076200  0.001774  0.002801  0.328947         2
+     bio+sto-short       141 460.08118 1692.201633 39.391706 40.914392 46.381579         3
+         bio-short        31  76.28130  293.079035  6.822404  6.783592 10.197368         4
+         sto-short         7   0.21530    0.695299  0.016185  0.019146  2.302632         5
+   bio+water-short        37 176.66170  708.370007 16.489703 15.710284 12.171053         6
+   sto+water-short         2   0.03600    0.157900  0.003676  0.003201  0.657895         7
+            vacuum        78 410.64120 1599.337737 37.229985 36.517762 25.657895         8
+
+======================================================================
+SCENARIO: BIO250  (Biomass from 250-km buffer)
+  params: {'BECCS_EFR': '0.50', 'BECCS_LIFE': '20', 'BECCS_BIO_FACTOR': '1.0', 'BECCS_BIO_RADIUS': '250', 'label': 'Biomass from 250-km buffer'}
+  folder: ../results_v2_new/sensitivity_results/BIO250
+======================================================================
+    >>> 1_compute_aggregate_city.py: python 1_compute_aggregate_city.py
+water: new basis (ChinaWR TWR + HSWUD, plant Thiessen) -> 2171 / 2171 plants matched
+电厂数: 2171, 地级市数: 304
+数据来源分布:
+数据来源
+ChinaWR+HSWUD(plant Thiessen)    304
+
+地级市级 总压 WSR (EFR 20/37/50/80):
+  EFR20: WSR>1 = 24.3% | 中位 0.553
+  EFR00: WSR>1 = 18.4% | 中位 0.353
+  EFR37: WSR>1 = 33.6% | 中位 0.723
+  EFR50: WSR>1 = 38.8% | 中位 0.853
+  EFR80: WSR>1 = 66.8% | 中位 1.153
+
+水资源口径:
+  新 water_thiessen_cityclip.xlsx | 电厂级 R=R_亿m3, U=U_竞争_亿m3 (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值)
+  城市值 = 本市各电厂自身值之和(非整市总量)
+  R 总和=16084 亿m3   U 总和=3259 亿m3
+
+市级 BCR/SER:
+  BCR_city>1: 14.5% | SER_city>1: 25.0%
+
+电厂级 vs 城市级 (三比例):
+                电厂级       城市级(按城市)       城市级(按电厂)
+  BCR         30.2%          14.5%           6.8%
+  SER         17.5%          25.0%          26.5%
+  WSR50       49.1%          38.8%          51.7%
+  注: 电厂级用各厂自有资源; 城市级=同市各厂资源/需求分别求和后相除
+
+saved: ../results_v2_new/sensitivity_results/BIO250/plant_city_hswud_aggregated.xlsx
+    >>> 4_compute_beccs_potential.py: python 4_compute_beccs_potential.py
+plants: 2171 | cities: 304
+national: storage 635 | water 3090 | biomass 1045 Mt/yr
+=== final annual BECCS potential (min of three limits; biogenic C only; fixed generation) ===
+  national: 237 Mt CO2/yr
+
+limiting resource (cities):
+limiting
+sto_Mt_yr    229
+wat_Mt_yr     40
+bio_Mt_yr     35
+
+top 10 cities by potential:
+city    GW  sto_Mt_yr  wat_Mt_yr  bio_Mt_yr  BECCS_Mt_yr
+ 哈尔滨  4.39      21.81      22.57      17.99        21.81
+  唐山  9.00      20.37      19.13       6.19        12.33
+  重庆 15.25      11.54      74.68      20.97        11.54
+  南阳  4.48      11.40      19.30      20.34        11.40
+  榆林 22.36      10.92     108.93       5.63        10.79
+  晋中  6.17      14.35      30.71       2.21         9.89
+锡林郭勒 13.75      19.28      67.13       2.33         7.38
+  塔城  1.38       7.23       7.07       4.31         7.05
+  四平  2.59       8.44      13.20       5.85         7.00
+ 驻马店  1.32       6.70       6.80       6.80         6.70
+
+saved ../results_v2_new/sensitivity_results/BIO250/BECCS_potential_plant.xlsx & ../results_v2_new/sensitivity_results/BIO250/BECCS_potential_city.xlsx
+    >>> 5_optimize_beccs_multi.py: python 5_optimize_beccs_multi.py
+S0_local: 276.281 Mt/yr  (bio=0.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.00 bn$/yr
+S1_biomass: 898.399 Mt/yr  (bio=622.1, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=28.99 bn$/yr
+S2_co2: 750.027 Mt/yr  (bio=0.0, co2=473.7, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=4.75 bn$/yr
+S3_biomass+co2: 1163.233 Mt/yr  (bio=413.2, co2=730.5, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=12.12 bn$/yr
+S4_biomass+co2+water: 1163.233 Mt/yr  (bio=205.9, co2=656.8, wat=257.0 Mt CO2-eq / 960 Mt water)  cost=9.56 bn$/yr
+S1_biomass_250km: 505.026 Mt/yr  (bio=237.4, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=2.46 bn$/yr
+S2_co2_250km: 526.381 Mt/yr  (bio=0.0, co2=265.4, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.33 bn$/yr
+S3_biomass+co2_250km: 978.637 Mt/yr  (bio=515.0, co2=561.7, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=8.95 bn$/yr
+S4_biomass+co2+water_250km: 1020.672 Mt/yr  (bio=342.5, co2=523.8, wat=259.3 Mt CO2-eq / 1170 Mt water)  cost=7.59 bn$/yr
+
+--- national BECCS potential by scenario (Mt/yr) ---
+                  scenario  total_Mt_yr  biomass_transport  co2_transport  water_transport  water_transport_Mt_water
+                  S0_local   276.281429           0.000000       0.000000         0.000000                  0.000000
+                S1_biomass   898.398769         622.117335       0.000000         0.000000                  0.000000
+                    S2_co2   750.026941           0.000000     473.745512         0.000000                  0.000000
+            S3_biomass+co2  1163.233382         413.206399     730.471993         0.000000                  0.000000
+      S4_biomass+co2+water  1163.233383         205.900980     656.836223       256.994629                960.042128
+          S1_biomass_250km   505.026497         237.379394       0.000000         0.000000                  0.000000
+              S2_co2_250km   526.380633           0.000000     265.402015         0.000000                  0.000000
+      S3_biomass+co2_250km   978.637042         515.026532     561.690852         0.000000                  0.000000
+S4_biomass+co2+water_250km  1020.671797         342.488972     523.839019       259.329242               1169.697779
+
+saved ../results_v2_new/sensitivity_results/BIO250/BECCS_scenarios_summary.xlsx & ../results_v2_new/sensitivity_results/BIO250/BECCS_scenario_city.xlsx & ../results_v2_new/sensitivity_results/BIO250/BECCS_coordination_result.xlsx
+    >>> 3_export_8class.py: python 3_export_8class.py
+saved: ../results_v2_new/sensitivity_results/BIO250/Fig3_6_prefecture_8class.xlsx
+saved: ../results_v2_new/sensitivity_results/BIO250/prefecture_8class.csv
+
+=== eight-class state distribution ===
+             class  n_cities    cap_GW     emis_Mt  emis_pct   cap_pct  city_pct  class_id
+bio+sto+water-rich        12   3.99100   13.696503  0.318832  0.354914  3.947368         1
+       water-short         4   4.49450   14.544433  0.338571  0.399690  1.315789         2
+     bio+sto-short       124 446.39804 1640.863948 38.196648 39.697569 40.789474         3
+         bio-short        26  72.83930  281.297027  6.548138  6.477500  8.552632         4
+         sto-short        24  13.89844   52.032984  1.211243  1.235969  7.894737         5
+   bio+water-short        34 172.19870  693.901774 16.152906 15.313395 11.184211         6
+   sto+water-short         4   1.41960    5.749075  0.133829  0.126243  1.315789         7
+            vacuum        76 409.25760 1593.746562 37.099832 36.394720 25.000000         8
+
+======================================================================
+SCENARIO: BIO500  (Biomass from 500-km buffer)
+  params: {'BECCS_EFR': '0.50', 'BECCS_LIFE': '20', 'BECCS_BIO_FACTOR': '1.0', 'BECCS_BIO_RADIUS': '500', 'label': 'Biomass from 500-km buffer'}
+  folder: ../results_v2_new/sensitivity_results/BIO500
+======================================================================
+    >>> 1_compute_aggregate_city.py: python 1_compute_aggregate_city.py
+water: new basis (ChinaWR TWR + HSWUD, plant Thiessen) -> 2171 / 2171 plants matched
+电厂数: 2171, 地级市数: 304
+数据来源分布:
+数据来源
+ChinaWR+HSWUD(plant Thiessen)    304
+
+地级市级 总压 WSR (EFR 20/37/50/80):
+  EFR20: WSR>1 = 24.3% | 中位 0.553
+  EFR00: WSR>1 = 18.4% | 中位 0.353
+  EFR37: WSR>1 = 33.6% | 中位 0.723
+  EFR50: WSR>1 = 38.8% | 中位 0.853
+  EFR80: WSR>1 = 66.8% | 中位 1.153
+
+水资源口径:
+  新 water_thiessen_cityclip.xlsx | 电厂级 R=R_亿m3, U=U_竞争_亿m3 (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值)
+  城市值 = 本市各电厂自身值之和(非整市总量)
+  R 总和=16084 亿m3   U 总和=3259 亿m3
+
+市级 BCR/SER:
+  BCR_city>1: 14.5% | SER_city>1: 25.0%
+
+电厂级 vs 城市级 (三比例):
+                电厂级       城市级(按城市)       城市级(按电厂)
+  BCR         30.3%          14.5%           6.8%
+  SER         17.5%          25.0%          26.5%
+  WSR50       49.1%          38.8%          51.7%
+  注: 电厂级用各厂自有资源; 城市级=同市各厂资源/需求分别求和后相除
+
+saved: ../results_v2_new/sensitivity_results/BIO500/plant_city_hswud_aggregated.xlsx
+    >>> 4_compute_beccs_potential.py: python 4_compute_beccs_potential.py
+plants: 2171 | cities: 304
+national: storage 635 | water 3090 | biomass 1046 Mt/yr
+=== final annual BECCS potential (min of three limits; biogenic C only; fixed generation) ===
+  national: 237 Mt CO2/yr
+
+limiting resource (cities):
+limiting
+sto_Mt_yr    229
+wat_Mt_yr     40
+bio_Mt_yr     35
+
+top 10 cities by potential:
+city    GW  sto_Mt_yr  wat_Mt_yr  bio_Mt_yr  BECCS_Mt_yr
+ 哈尔滨  4.39      21.81      22.57      17.99        21.81
+  唐山  9.00      20.37      19.13       6.19        12.33
+  重庆 15.25      11.54      74.68      20.97        11.54
+  南阳  4.48      11.40      19.30      20.34        11.40
+  榆林 22.36      10.92     108.93       5.63        10.79
+  晋中  6.17      14.35      30.71       2.21         9.89
+锡林郭勒 13.75      19.28      67.13       2.33         7.38
+  塔城  1.38       7.23       7.07       4.31         7.05
+  四平  2.59       8.44      13.20       5.85         7.00
+ 驻马店  1.32       6.70       6.80       6.80         6.70
+
+saved ../results_v2_new/sensitivity_results/BIO500/BECCS_potential_plant.xlsx & ../results_v2_new/sensitivity_results/BIO500/BECCS_potential_city.xlsx
+    >>> 5_optimize_beccs_multi.py: python 5_optimize_beccs_multi.py
+S0_local: 276.342 Mt/yr  (bio=0.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.00 bn$/yr
+S1_biomass: 898.399 Mt/yr  (bio=622.1, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=28.96 bn$/yr
+S2_co2: 750.730 Mt/yr  (bio=0.0, co2=474.4, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=4.76 bn$/yr
+S3_biomass+co2: 1164.361 Mt/yr  (bio=413.6, co2=731.2, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=12.14 bn$/yr
+S4_biomass+co2+water: 1164.361 Mt/yr  (bio=206.3, co2=657.7, wat=257.1 Mt CO2-eq / 961 Mt water)  cost=9.57 bn$/yr
+S1_biomass_250km: 505.232 Mt/yr  (bio=237.7, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=2.46 bn$/yr
+S2_co2_250km: 526.607 Mt/yr  (bio=0.0, co2=265.6, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.33 bn$/yr
+S3_biomass+co2_250km: 979.679 Mt/yr  (bio=516.0, co2=562.7, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=8.96 bn$/yr
+S4_biomass+co2+water_250km: 1021.754 Mt/yr  (bio=343.5, co2=524.4, wat=259.6 Mt CO2-eq / 1171 Mt water)  cost=7.61 bn$/yr
+
+--- national BECCS potential by scenario (Mt/yr) ---
+                  scenario  total_Mt_yr  biomass_transport  co2_transport  water_transport  water_transport_Mt_water
+                  S0_local   276.342249           0.000000       0.000000         0.000000                  0.000000
+                S1_biomass   898.398810         622.056556       0.000000         0.000000                  0.000000
+                    S2_co2   750.729787           0.000000     474.387537         0.000000                  0.000000
+            S3_biomass+co2  1164.361143         413.631331     731.198600         0.000000                  0.000000
+      S4_biomass+co2+water  1164.361143         206.269483     657.700017       257.091220                960.510799
+          S1_biomass_250km   505.232432         237.666256       0.000000         0.000000                  0.000000
+              S2_co2_250km   526.606962           0.000000     265.567555         0.000000                  0.000000
+      S3_biomass+co2_250km   979.679252         516.043707     562.673093         0.000000                  0.000000
+S4_biomass+co2+water_250km  1021.754197         343.489974     524.444927       259.627166               1170.676372
+
+saved ../results_v2_new/sensitivity_results/BIO500/BECCS_scenarios_summary.xlsx & ../results_v2_new/sensitivity_results/BIO500/BECCS_scenario_city.xlsx & ../results_v2_new/sensitivity_results/BIO500/BECCS_coordination_result.xlsx
+    >>> 3_export_8class.py: python 3_export_8class.py
+saved: ../results_v2_new/sensitivity_results/BIO500/Fig3_6_prefecture_8class.xlsx
+saved: ../results_v2_new/sensitivity_results/BIO500/prefecture_8class.csv
+
+=== eight-class state distribution ===
+             class  n_cities    cap_GW     emis_Mt  emis_pct   cap_pct  city_pct  class_id
+bio+sto+water-rich        12   3.99100   13.696503  0.318832  0.354914  3.947368         1
+       water-short         4   4.49450   14.544433  0.338571  0.399690  1.315789         2
+     bio+sto-short       124 446.39804 1640.863948 38.196648 39.697569 40.789474         3
+         bio-short        26  72.83930  281.297027  6.548138  6.477500  8.552632         4
+         sto-short        24  13.89844   52.032984  1.211243  1.235969  7.894737         5
+   bio+water-short        34 172.19870  693.901774 16.152906 15.313395 11.184211         6
+   sto+water-short         4   1.41960    5.749075  0.133829  0.126243  1.315789         7
+            vacuum        76 409.25760 1593.746562 37.099832 36.394720 25.000000         8
+
+======================================================================
+SCENARIO: STO100  (Storage from 100-km buffer)
+  params: {'BECCS_EFR': '0.50', 'BECCS_LIFE': '20', 'BECCS_BIO_FACTOR': '1.0', 'BECCS_STO_RADIUS': '100', 'label': 'Storage from 100-km buffer'}
+  folder: ../results_v2_new/sensitivity_results/STO100
+======================================================================
+    >>> 1_compute_aggregate_city.py: python 1_compute_aggregate_city.py
+water: new basis (ChinaWR TWR + HSWUD, plant Thiessen) -> 2171 / 2171 plants matched
+电厂数: 2171, 地级市数: 304
+数据来源分布:
+数据来源
+ChinaWR+HSWUD(plant Thiessen)    304
+
+地级市级 总压 WSR (EFR 20/37/50/80):
+  EFR20: WSR>1 = 24.3% | 中位 0.553
+  EFR00: WSR>1 = 18.4% | 中位 0.353
+  EFR37: WSR>1 = 33.6% | 中位 0.723
+  EFR50: WSR>1 = 38.8% | 中位 0.853
+  EFR80: WSR>1 = 66.8% | 中位 1.153
+
+水资源口径:
+  新 water_thiessen_cityclip.xlsx | 电厂级 R=R_亿m3, U=U_竞争_亿m3 (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值)
+  城市值 = 本市各电厂自身值之和(非整市总量)
+  R 总和=16084 亿m3   U 总和=3259 亿m3
+
+市级 BCR/SER:
+  BCR_city>1: 13.5% | SER_city>1: 24.3%
+
+电厂级 vs 城市级 (三比例):
+                电厂级       城市级(按城市)       城市级(按电厂)
+  BCR         30.0%          13.5%           6.6%
+  SER         17.2%          24.3%          28.6%
+  WSR50       49.1%          38.8%          51.7%
+  注: 电厂级用各厂自有资源; 城市级=同市各厂资源/需求分别求和后相除
+
+saved: ../results_v2_new/sensitivity_results/STO100/plant_city_hswud_aggregated.xlsx
+    >>> 4_compute_beccs_potential.py: python 4_compute_beccs_potential.py
+plants: 2171 | cities: 304
+national: storage 657 | water 3090 | biomass 1035 Mt/yr
+=== final annual BECCS potential (min of three limits; biogenic C only; fixed generation) ===
+  national: 233 Mt CO2/yr
+
+limiting resource (cities):
+limiting
+sto_Mt_yr    232
+wat_Mt_yr     38
+bio_Mt_yr     34
+
+top 10 cities by potential:
+city    GW  sto_Mt_yr  wat_Mt_yr  bio_Mt_yr  BECCS_Mt_yr
+ 哈尔滨  4.39      22.28      22.57      17.99        22.28
+  重庆 15.25      12.58      74.68      20.11        12.58
+  唐山  9.00      20.37      19.13       6.19        12.33
+  榆林 22.36      11.82     108.93       5.56        11.65
+  南阳  4.48      11.40      19.30      20.34        11.40
+  晋中  6.17      14.43      30.71       2.21         9.97
+ 双鸭山  2.97       8.15      14.56       9.71         8.15
+  四平  2.59       9.41      13.20       5.85         7.97
+  塔城  1.38       7.23       7.07       4.31         7.05
+ 驻马店  1.32       6.80       6.80       6.80         6.80
+
+saved ../results_v2_new/sensitivity_results/STO100/BECCS_potential_plant.xlsx & ../results_v2_new/sensitivity_results/STO100/BECCS_potential_city.xlsx
+    >>> 5_optimize_beccs_multi.py: python 5_optimize_beccs_multi.py
+S0_local: 255.274 Mt/yr  (bio=0.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.00 bn$/yr
+S1_biomass: 815.662 Mt/yr  (bio=560.4, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=22.71 bn$/yr
+S2_co2: 740.723 Mt/yr  (bio=0.0, co2=485.4, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=4.81 bn$/yr
+S3_biomass+co2: 1145.976 Mt/yr  (bio=405.3, co2=735.9, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=11.88 bn$/yr
+S4_biomass+co2+water: 1145.976 Mt/yr  (bio=202.6, co2=662.7, wat=252.6 Mt CO2-eq / 946 Mt water)  cost=9.41 bn$/yr
+S1_biomass_250km: 493.600 Mt/yr  (bio=247.1, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=2.63 bn$/yr
+S2_co2_250km: 517.013 Mt/yr  (bio=0.0, co2=276.3, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.41 bn$/yr
+S3_biomass+co2_250km: 968.460 Mt/yr  (bio=519.2, co2=572.9, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=9.06 bn$/yr
+S4_biomass+co2+water_250km: 1011.535 Mt/yr  (bio=348.8, co2=532.4, wat=261.1 Mt CO2-eq / 1194 Mt water)  cost=7.75 bn$/yr
+
+--- national BECCS potential by scenario (Mt/yr) ---
+                  scenario  total_Mt_yr  biomass_transport  co2_transport  water_transport  water_transport_Mt_water
+                  S0_local   255.273563           0.000000       0.000000         0.000000                  0.000000
+                S1_biomass   815.662193         560.388632       0.000000         0.000000                  0.000000
+                    S2_co2   740.722759           0.000000     485.449196         0.000000                  0.000000
+            S3_biomass+co2  1145.976391         405.253621     735.940570         0.000000                  0.000000
+      S4_biomass+co2+water  1145.976393         202.594061     662.693219       252.574774                945.814055
+          S1_biomass_250km   493.599891         247.071570       0.000000         0.000000                  0.000000
+              S2_co2_250km   517.013071           0.000000     276.345427         0.000000                  0.000000
+      S3_biomass+co2_250km   968.459911         519.181373     572.879201         0.000000                  0.000000
+S4_biomass+co2+water_250km  1011.535142         348.824234     532.416762       261.068630               1193.928121
+
+saved ../results_v2_new/sensitivity_results/STO100/BECCS_scenarios_summary.xlsx & ../results_v2_new/sensitivity_results/STO100/BECCS_scenario_city.xlsx & ../results_v2_new/sensitivity_results/STO100/BECCS_coordination_result.xlsx
+    >>> 3_export_8class.py: python 3_export_8class.py
+saved: ../results_v2_new/sensitivity_results/STO100/Fig3_6_prefecture_8class.xlsx
+saved: ../results_v2_new/sensitivity_results/STO100/prefecture_8class.csv
+
+=== eight-class state distribution ===
+             class  n_cities    cap_GW     emis_Mt  emis_pct   cap_pct  city_pct  class_id
+bio+sto+water-rich        11   3.72100   12.516604  0.291366  0.330903  3.618421         1
+       water-short         4   4.49450   14.544433  0.338571  0.399690  1.315789         2
+     bio+sto-short       124 421.86004 1530.823293 35.635080 37.515438 40.789474         3
+         bio-short        28  98.86230  397.006706  9.241671  8.791689  9.210526         4
+         sto-short        23  12.68344   47.543859  1.106744  1.127921  7.565789         5
+   bio+water-short        31 172.71470  689.182007 16.043038 15.359283 10.197368         6
+   sto+water-short         3   0.71960    2.762986  0.064318  0.063993  0.986842         7
+            vacuum        80 409.44160 1601.452418 37.279212 36.411083 26.315789         8
+
+======================================================================
+SCENARIO: STO500  (Storage from 500-km buffer)
+  params: {'BECCS_EFR': '0.50', 'BECCS_LIFE': '20', 'BECCS_BIO_FACTOR': '1.0', 'BECCS_STO_RADIUS': '500', 'label': 'Storage from 500-km buffer'}
+  folder: ../results_v2_new/sensitivity_results/STO500
+======================================================================
+    >>> 1_compute_aggregate_city.py: python 1_compute_aggregate_city.py
+water: new basis (ChinaWR TWR + HSWUD, plant Thiessen) -> 2171 / 2171 plants matched
+电厂数: 2171, 地级市数: 304
+数据来源分布:
+数据来源
+ChinaWR+HSWUD(plant Thiessen)    304
+
+地级市级 总压 WSR (EFR 20/37/50/80):
+  EFR20: WSR>1 = 24.3% | 中位 0.553
+  EFR00: WSR>1 = 18.4% | 中位 0.353
+  EFR37: WSR>1 = 33.6% | 中位 0.723
+  EFR50: WSR>1 = 38.8% | 中位 0.853
+  EFR80: WSR>1 = 66.8% | 中位 1.153
+
+水资源口径:
+  新 water_thiessen_cityclip.xlsx | 电厂级 R=R_亿m3, U=U_竞争_亿m3 (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值)
+  城市值 = 本市各电厂自身值之和(非整市总量)
+  R 总和=16084 亿m3   U 总和=3259 亿m3
+
+市级 BCR/SER:
+  BCR_city>1: 13.5% | SER_city>1: 25.3%
+
+电厂级 vs 城市级 (三比例):
+                电厂级       城市级(按城市)       城市级(按电厂)
+  BCR         30.0%          13.5%           6.6%
+  SER         17.4%          25.3%          31.2%
+  WSR50       49.1%          38.8%          51.7%
+  注: 电厂级用各厂自有资源; 城市级=同市各厂资源/需求分别求和后相除
+
+saved: ../results_v2_new/sensitivity_results/STO500/plant_city_hswud_aggregated.xlsx
+    >>> 4_compute_beccs_potential.py: python 4_compute_beccs_potential.py
+plants: 2171 | cities: 304
+national: storage 673 | water 3090 | biomass 1035 Mt/yr
+=== final annual BECCS potential (min of three limits; biogenic C only; fixed generation) ===
+  national: 237 Mt CO2/yr
+
+limiting resource (cities):
+limiting
+sto_Mt_yr    229
+wat_Mt_yr     38
+bio_Mt_yr     37
+
+top 10 cities by potential:
+city    GW  sto_Mt_yr  wat_Mt_yr  bio_Mt_yr  BECCS_Mt_yr
+ 哈尔滨  4.39      22.28      22.57      17.99        22.28
+  重庆 15.25      12.58      74.68      20.11        12.58
+  唐山  9.00      20.37      19.13       6.19        12.33
+  榆林 22.36      11.82     108.93       5.56        11.65
+  南阳  4.48      11.40      19.30      20.34        11.40
+  晋中  6.17      14.43      30.71       2.21         9.97
+ 双鸭山  2.97       8.15      14.56       9.71         8.15
+  四平  2.59       9.41      13.20       5.85         7.97
+  塔城  1.38       7.23       7.07       4.31         7.05
+ 驻马店  1.32       6.80       6.80       6.80         6.80
+
+saved ../results_v2_new/sensitivity_results/STO500/BECCS_potential_plant.xlsx & ../results_v2_new/sensitivity_results/STO500/BECCS_potential_city.xlsx
+    >>> 5_optimize_beccs_multi.py: python 5_optimize_beccs_multi.py
+S0_local: 264.243 Mt/yr  (bio=0.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.00 bn$/yr
+S1_biomass: 910.593 Mt/yr  (bio=646.6, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=29.61 bn$/yr
+S2_co2: 740.723 Mt/yr  (bio=0.0, co2=476.5, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=4.55 bn$/yr
+S3_biomass+co2: 1145.976 Mt/yr  (bio=405.3, co2=726.9, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=11.61 bn$/yr
+S4_biomass+co2+water: 1145.976 Mt/yr  (bio=202.6, co2=653.7, wat=252.6 Mt CO2-eq / 946 Mt water)  cost=9.15 bn$/yr
+S1_biomass_250km: 509.341 Mt/yr  (bio=253.8, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=2.71 bn$/yr
+S2_co2_250km: 532.755 Mt/yr  (bio=0.0, co2=283.1, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.45 bn$/yr
+S3_biomass+co2_250km: 984.275 Mt/yr  (bio=519.3, co2=579.7, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=9.10 bn$/yr
+S4_biomass+co2+water_250km: 1028.013 Mt/yr  (bio=349.6, co2=539.9, wat=261.7 Mt CO2-eq / 1199 Mt water)  cost=7.80 bn$/yr
+
+--- national BECCS potential by scenario (Mt/yr) ---
+                  scenario  total_Mt_yr  biomass_transport  co2_transport  water_transport  water_transport_Mt_water
+                  S0_local   264.242931           0.000000       0.000000         0.000000                  0.000000
+                S1_biomass   910.593478         646.598003       0.000000         0.000000                  0.000000
+                    S2_co2   740.722731           0.000000     476.479800         0.000000                  0.000000
+            S3_biomass+co2  1145.976391         405.253621     726.897620         0.000000                  0.000000
+      S4_biomass+co2+water  1145.976393         202.594061     653.650269       252.574774                945.814055
+          S1_biomass_250km   509.341444         253.843722       0.000000         0.000000                  0.000000
+              S2_co2_250km   532.754668           0.000000     283.117716         0.000000                  0.000000
+      S3_biomass+co2_250km   984.275064         519.254962     579.724987         0.000000                  0.000000
+S4_biomass+co2+water_250km  1028.012518         349.560043     539.924772       261.730855               1199.029194
+
+saved ../results_v2_new/sensitivity_results/STO500/BECCS_scenarios_summary.xlsx & ../results_v2_new/sensitivity_results/STO500/BECCS_scenario_city.xlsx & ../results_v2_new/sensitivity_results/STO500/BECCS_coordination_result.xlsx
+    >>> 3_export_8class.py: python 3_export_8class.py
+saved: ../results_v2_new/sensitivity_results/STO500/Fig3_6_prefecture_8class.xlsx
+saved: ../results_v2_new/sensitivity_results/STO500/prefecture_8class.csv
+
+=== eight-class state distribution ===
+             class  n_cities    cap_GW     emis_Mt  emis_pct   cap_pct  city_pct  class_id
+bio+sto+water-rich        11   3.72100   12.516604  0.291366  0.330903  3.618421         1
+       water-short         4   4.49450   14.544433  0.338571  0.399690  1.315789         2
+     bio+sto-short       123 399.49704 1442.946565 33.589453 35.526727 40.460526         3
+         bio-short        29 121.22530  484.883434 11.287299 10.780401  9.539474         4
+         sto-short        23  12.68344   47.543859  1.106744  1.127921  7.565789         5
+   bio+water-short        33 185.83370  749.030262 17.436208 16.525937 10.855263         6
+   sto+water-short         3   0.71960    2.762986  0.064318  0.063993  0.986842         7
+            vacuum        78 396.32260 1541.604163 35.886041 35.244428 25.657895         8
+
+======================================================================
+SCENARIO: STOR25  (Storage 25-year horizon)
+  params: {'BECCS_EFR': '0.50', 'BECCS_LIFE': '25', 'BECCS_BIO_FACTOR': '1.0', 'label': 'Storage 25-year horizon'}
+  folder: ../results_v2_new/sensitivity_results/STOR25
+======================================================================
+    >>> 1_compute_aggregate_city.py: python 1_compute_aggregate_city.py
+water: new basis (ChinaWR TWR + HSWUD, plant Thiessen) -> 2171 / 2171 plants matched
+电厂数: 2171, 地级市数: 304
+数据来源分布:
+数据来源
+ChinaWR+HSWUD(plant Thiessen)    304
+
+地级市级 总压 WSR (EFR 20/37/50/80):
+  EFR20: WSR>1 = 24.3% | 中位 0.553
+  EFR00: WSR>1 = 18.4% | 中位 0.353
+  EFR37: WSR>1 = 33.6% | 中位 0.723
+  EFR50: WSR>1 = 38.8% | 中位 0.853
+  EFR80: WSR>1 = 66.8% | 中位 1.153
+
+水资源口径:
+  新 water_thiessen_cityclip.xlsx | 电厂级 R=R_亿m3, U=U_竞争_亿m3 (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值)
+  城市值 = 本市各电厂自身值之和(非整市总量)
+  R 总和=16084 亿m3   U 总和=3259 亿m3
+
+市级 BCR/SER:
+  BCR_city>1: 13.5% | SER_city>1: 24.0%
+
+电厂级 vs 城市级 (三比例):
+                电厂级       城市级(按城市)       城市级(按电厂)
+  BCR         30.0%          13.5%           6.6%
+  SER         17.2%          24.0%          25.2%
+  WSR50       49.1%          38.8%          51.7%
+  注: 电厂级用各厂自有资源; 城市级=同市各厂资源/需求分别求和后相除
+
+saved: ../results_v2_new/sensitivity_results/STOR25/plant_city_hswud_aggregated.xlsx
+    >>> 4_compute_beccs_potential.py: python 4_compute_beccs_potential.py
+plants: 2171 | cities: 304
+national: storage 621 | water 3090 | biomass 1035 Mt/yr
+=== final annual BECCS potential (min of three limits; biogenic C only; fixed generation) ===
+  national: 235 Mt CO2/yr
+
+limiting resource (cities):
+limiting
+sto_Mt_yr    228
+wat_Mt_yr     40
+bio_Mt_yr     36
+
+top 10 cities by potential:
+city    GW  sto_Mt_yr  wat_Mt_yr  bio_Mt_yr  BECCS_Mt_yr
+ 哈尔滨  4.39      21.81      22.57      17.99        21.81
+  唐山  9.00      20.37      19.13       6.19        12.33
+  重庆 15.25      11.54      74.68      20.11        11.54
+  南阳  4.48      11.40      19.30      20.34        11.40
+  榆林 22.36      10.92     108.93       5.56        10.79
+  晋中  6.17      14.35      30.71       2.21         9.89
+锡林郭勒 13.75      19.28      67.13       2.33         7.38
+  塔城  1.38       7.23       7.07       4.31         7.05
+  四平  2.59       8.44      13.20       5.85         7.00
+ 驻马店  1.32       6.70       6.80       6.80         6.70
+
+saved ../results_v2_new/sensitivity_results/STOR25/BECCS_potential_plant.xlsx & ../results_v2_new/sensitivity_results/STOR25/BECCS_potential_city.xlsx
+    >>> 5_optimize_beccs_multi.py: python 5_optimize_beccs_multi.py
+S0_local: 272.190 Mt/yr  (bio=0.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.00 bn$/yr
+S1_biomass: 868.255 Mt/yr  (bio=596.1, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=27.22 bn$/yr
+S2_co2: 740.723 Mt/yr  (bio=0.0, co2=468.5, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=4.68 bn$/yr
+S3_biomass+co2: 1145.976 Mt/yr  (bio=405.3, co2=719.4, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=11.73 bn$/yr
+S4_biomass+co2+water: 1145.976 Mt/yr  (bio=201.8, co2=645.5, wat=253.1 Mt CO2-eq / 948 Mt water)  cost=9.26 bn$/yr
+S1_biomass_250km: 499.566 Mt/yr  (bio=236.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=2.45 bn$/yr
+S2_co2_250km: 520.640 Mt/yr  (bio=0.0, co2=263.3, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.32 bn$/yr
+S3_biomass+co2_250km: 972.238 Mt/yr  (bio=513.5, co2=560.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=8.96 bn$/yr
+S4_biomass+co2+water_250km: 1014.134 Mt/yr  (bio=340.8, co2=523.4, wat=259.2 Mt CO2-eq / 1170 Mt water)  cost=7.59 bn$/yr
+
+--- national BECCS potential by scenario (Mt/yr) ---
+                  scenario  total_Mt_yr  biomass_transport  co2_transport  water_transport  water_transport_Mt_water
+                  S0_local   272.189541           0.000000       0.000000         0.000000                  0.000000
+                S1_biomass   868.254757         596.065214       0.000000         0.000000                  0.000000
+                    S2_co2   740.722737           0.000000     468.533195         0.000000                  0.000000
+            S3_biomass+co2  1145.976391         405.253621     719.365523         0.000000                  0.000000
+      S4_biomass+co2+water  1145.976393         201.847962     645.498671       253.094869                947.706087
+          S1_biomass_250km   499.566035         236.010882       0.000000         0.000000                  0.000000
+              S2_co2_250km   520.640241           0.000000     263.294135         0.000000                  0.000000
+      S3_biomass+co2_250km   972.238064         513.479914     560.032709         0.000000                  0.000000
+S4_biomass+co2+water_250km  1014.133619         340.792561     523.423854       259.217173               1169.926925
+
+saved ../results_v2_new/sensitivity_results/STOR25/BECCS_scenarios_summary.xlsx & ../results_v2_new/sensitivity_results/STOR25/BECCS_scenario_city.xlsx & ../results_v2_new/sensitivity_results/STOR25/BECCS_coordination_result.xlsx
+    >>> 3_export_8class.py: python 3_export_8class.py
+saved: ../results_v2_new/sensitivity_results/STOR25/Fig3_6_prefecture_8class.xlsx
+saved: ../results_v2_new/sensitivity_results/STOR25/prefecture_8class.csv
+
+=== eight-class state distribution ===
+             class  n_cities    cap_GW     emis_Mt  emis_pct   cap_pct  city_pct  class_id
+bio+sto+water-rich        11   3.72100   12.516604  0.291366  0.330903  3.618421         1
+       water-short         4   4.49450   14.544433  0.338571  0.399690  1.315789         2
+     bio+sto-short       125 447.61304 1645.353073 38.301148 39.805617 41.118421         3
+         bio-short        27  73.10930  282.476926  6.575604  6.501510  8.881579         4
+         sto-short        23  12.68344   47.543859  1.106744  1.127921  7.565789         5
+   bio+water-short        31 153.96970  613.444287 14.279987 13.692315 10.197368         6
+   sto+water-short         3   0.71960    2.762986  0.064318  0.063993  0.986842         7
+            vacuum        80 428.18660 1677.190138 39.042263 38.078050 26.315789         8
+
+======================================================================
+SCENARIO: STOR30  (Storage 30-year horizon)
+  params: {'BECCS_EFR': '0.50', 'BECCS_LIFE': '30', 'BECCS_BIO_FACTOR': '1.0', 'label': 'Storage 30-year horizon'}
+  folder: ../results_v2_new/sensitivity_results/STOR30
+======================================================================
+    >>> 1_compute_aggregate_city.py: python 1_compute_aggregate_city.py
+water: new basis (ChinaWR TWR + HSWUD, plant Thiessen) -> 2171 / 2171 plants matched
+电厂数: 2171, 地级市数: 304
+数据来源分布:
+数据来源
+ChinaWR+HSWUD(plant Thiessen)    304
+
+地级市级 总压 WSR (EFR 20/37/50/80):
+  EFR20: WSR>1 = 24.3% | 中位 0.553
+  EFR00: WSR>1 = 18.4% | 中位 0.353
+  EFR37: WSR>1 = 33.6% | 中位 0.723
+  EFR50: WSR>1 = 38.8% | 中位 0.853
+  EFR80: WSR>1 = 66.8% | 中位 1.153
+
+水资源口径:
+  新 water_thiessen_cityclip.xlsx | 电厂级 R=R_亿m3, U=U_竞争_亿m3 (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值)
+  城市值 = 本市各电厂自身值之和(非整市总量)
+  R 总和=16084 亿m3   U 总和=3259 亿m3
+
+市级 BCR/SER:
+  BCR_city>1: 13.5% | SER_city>1: 24.0%
+
+电厂级 vs 城市级 (三比例):
+                电厂级       城市级(按城市)       城市级(按电厂)
+  BCR         30.0%          13.5%           6.6%
+  SER         17.0%          24.0%          25.2%
+  WSR50       49.1%          38.8%          51.7%
+  注: 电厂级用各厂自有资源; 城市级=同市各厂资源/需求分别求和后相除
+
+saved: ../results_v2_new/sensitivity_results/STOR30/plant_city_hswud_aggregated.xlsx
+    >>> 4_compute_beccs_potential.py: python 4_compute_beccs_potential.py
+plants: 2171 | cities: 304
+national: storage 610 | water 3090 | biomass 1035 Mt/yr
+=== final annual BECCS potential (min of three limits; biogenic C only; fixed generation) ===
+  national: 234 Mt CO2/yr
+
+limiting resource (cities):
+limiting
+sto_Mt_yr    228
+wat_Mt_yr     40
+bio_Mt_yr     36
+
+top 10 cities by potential:
+city    GW  sto_Mt_yr  wat_Mt_yr  bio_Mt_yr  BECCS_Mt_yr
+ 哈尔滨  4.39      21.81      22.57      17.99        21.81
+  唐山  9.00      20.37      19.13       6.19        12.33
+  重庆 15.25      11.54      74.68      20.11        11.54
+  南阳  4.48      11.40      19.30      20.34        11.40
+  榆林 22.36      10.92     108.93       5.56        10.79
+  晋中  6.17      14.35      30.71       2.21         9.89
+锡林郭勒 13.75      19.28      67.13       2.33         7.38
+  塔城  1.38       7.23       7.07       4.31         7.05
+  四平  2.59       8.44      13.20       5.85         7.00
+ 驻马店  1.32       6.70       6.80       6.80         6.70
+
+saved ../results_v2_new/sensitivity_results/STOR30/BECCS_potential_plant.xlsx & ../results_v2_new/sensitivity_results/STOR30/BECCS_potential_city.xlsx
+    >>> 5_optimize_beccs_multi.py: python 5_optimize_beccs_multi.py
+S0_local: 270.555 Mt/yr  (bio=0.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.00 bn$/yr
+S1_biomass: 825.502 Mt/yr  (bio=554.9, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=23.75 bn$/yr
+S2_co2: 740.723 Mt/yr  (bio=0.0, co2=470.2, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=4.71 bn$/yr
+S3_biomass+co2: 1145.976 Mt/yr  (bio=405.3, co2=722.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=11.78 bn$/yr
+S4_biomass+co2+water: 1145.976 Mt/yr  (bio=201.8, co2=647.9, wat=252.9 Mt CO2-eq / 947 Mt water)  cost=9.32 bn$/yr
+S1_biomass_250km: 497.241 Mt/yr  (bio=236.2, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=2.46 bn$/yr
+S2_co2_250km: 518.756 Mt/yr  (bio=0.0, co2=263.7, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.33 bn$/yr
+S3_biomass+co2_250km: 970.678 Mt/yr  (bio=513.9, co2=564.2, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=9.02 bn$/yr
+S4_biomass+co2+water_250km: 1012.573 Mt/yr  (bio=340.3, co2=525.8, wat=258.7 Mt CO2-eq / 1162 Mt water)  cost=7.63 bn$/yr
+
+--- national BECCS potential by scenario (Mt/yr) ---
+                  scenario  total_Mt_yr  biomass_transport  co2_transport  water_transport  water_transport_Mt_water
+                  S0_local   270.555002           0.000000       0.000000         0.000000                   0.00000
+                S1_biomass   825.501934         554.946929       0.000000         0.000000                   0.00000
+                    S2_co2   740.722765           0.000000     470.167763         0.000000                   0.00000
+            S3_biomass+co2  1145.976391         405.253621     721.964100         0.000000                   0.00000
+      S4_biomass+co2+water  1145.976393         201.847962     647.913878       252.907693                 947.28289
+          S1_biomass_250km   497.240618         236.247377       0.000000         0.000000                   0.00000
+              S2_co2_250km   518.755557           0.000000     263.665075         0.000000                   0.00000
+      S3_biomass+co2_250km   970.677720         513.944523     564.211629         0.000000                   0.00000
+S4_biomass+co2+water_250km  1012.573326         340.326556     525.757005       258.715207                1162.32433
+
+saved ../results_v2_new/sensitivity_results/STOR30/BECCS_scenarios_summary.xlsx & ../results_v2_new/sensitivity_results/STOR30/BECCS_scenario_city.xlsx & ../results_v2_new/sensitivity_results/STOR30/BECCS_coordination_result.xlsx
+    >>> 3_export_8class.py: python 3_export_8class.py
+saved: ../results_v2_new/sensitivity_results/STOR30/Fig3_6_prefecture_8class.xlsx
+saved: ../results_v2_new/sensitivity_results/STOR30/prefecture_8class.csv
+
+=== eight-class state distribution ===
+             class  n_cities    cap_GW     emis_Mt  emis_pct   cap_pct  city_pct  class_id
+bio+sto+water-rich        11   3.72100   12.516604  0.291366  0.330903  3.618421         1
+       water-short         4   4.49450   14.544433  0.338571  0.399690  1.315789         2
+     bio+sto-short       125 447.61304 1645.353073 38.301148 39.805617 41.118421         3
+         bio-short        27  73.10930  282.476926  6.575604  6.501510  8.881579         4
+         sto-short        23  12.68344   47.543859  1.106744  1.127921  7.565789         5
+   bio+water-short        31 153.96970  613.444287 14.279987 13.692315 10.197368         6
+   sto+water-short         3   0.71960    2.762986  0.064318  0.063993  0.986842         7
+            vacuum        80 428.18660 1677.190138 39.042263 38.078050 26.315789         8
+
+======================================================================
+SCENARIO: STOCAP50  (Storage potential 50%)
+  params: {'BECCS_EFR': '0.50', 'BECCS_LIFE': '20', 'BECCS_BIO_FACTOR': '1.0', 'BECCS_STO_FACTOR': '0.50', 'label': 'Storage potential 50%'}
+  folder: ../results_v2_new/sensitivity_results/STOCAP50
+======================================================================
+    >>> 1_compute_aggregate_city.py: python 1_compute_aggregate_city.py
+water: new basis (ChinaWR TWR + HSWUD, plant Thiessen) -> 2171 / 2171 plants matched
+电厂数: 2171, 地级市数: 304
+数据来源分布:
+数据来源
+ChinaWR+HSWUD(plant Thiessen)    304
+
+地级市级 总压 WSR (EFR 20/37/50/80):
+  EFR20: WSR>1 = 24.3% | 中位 0.553
+  EFR00: WSR>1 = 18.4% | 中位 0.353
+  EFR37: WSR>1 = 33.6% | 中位 0.723
+  EFR50: WSR>1 = 38.8% | 中位 0.853
+  EFR80: WSR>1 = 66.8% | 中位 1.153
+
+水资源口径:
+  新 water_thiessen_cityclip.xlsx | 电厂级 R=R_亿m3, U=U_竞争_亿m3 (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值)
+  城市值 = 本市各电厂自身值之和(非整市总量)
+  R 总和=16084 亿m3   U 总和=3259 亿m3
+
+市级 BCR/SER:
+  BCR_city>1: 13.5% | SER_city>1: 22.0%
+
+电厂级 vs 城市级 (三比例):
+                电厂级       城市级(按城市)       城市级(按电厂)
+  BCR         30.0%          13.5%           6.6%
+  SER         15.9%          22.0%          23.2%
+  WSR50       49.1%          38.8%          51.7%
+  注: 电厂级用各厂自有资源; 城市级=同市各厂资源/需求分别求和后相除
+
+saved: ../results_v2_new/sensitivity_results/STOCAP50/plant_city_hswud_aggregated.xlsx
+    >>> 4_compute_beccs_potential.py: python 4_compute_beccs_potential.py
+plants: 2171 | cities: 304
+national: storage 555 | water 3090 | biomass 1035 Mt/yr
+=== final annual BECCS potential (min of three limits; biogenic C only; fixed generation) ===
+  national: 205 Mt CO2/yr
+
+limiting resource (cities):
+limiting
+sto_Mt_yr    234
+wat_Mt_yr     40
+bio_Mt_yr     30
+
+top 10 cities by potential:
+city    GW  sto_Mt_yr  wat_Mt_yr  bio_Mt_yr  BECCS_Mt_yr
+ 哈尔滨  4.39      20.69      22.57      17.99        20.69
+  唐山  9.00      20.37      19.13       6.19        12.33
+  南阳  4.48      10.49      19.30      20.34        10.49
+  榆林 22.36       9.36     108.93       5.56         9.29
+  晋中  6.17      10.26      30.71       2.21         9.13
+锡林郭勒 13.75      19.28      67.13       2.33         7.38
+  塔城  1.38       7.23       7.07       4.31         7.05
+  四平  2.59       8.37      13.20       5.85         6.93
+ 驻马店  1.32       6.70       6.80       6.80         6.70
+  重庆 15.25       6.34      74.68      20.11         6.34
+
+saved ../results_v2_new/sensitivity_results/STOCAP50/BECCS_potential_plant.xlsx & ../results_v2_new/sensitivity_results/STOCAP50/BECCS_potential_city.xlsx
+    >>> 5_optimize_beccs_multi.py: python 5_optimize_beccs_multi.py
+S0_local: 244.120 Mt/yr  (bio=0.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.00 bn$/yr
+S1_biomass: 679.146 Mt/yr  (bio=435.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=16.40 bn$/yr
+S2_co2: 740.723 Mt/yr  (bio=0.0, co2=496.6, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=5.45 bn$/yr
+S3_biomass+co2: 1145.976 Mt/yr  (bio=405.3, co2=766.9, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=12.96 bn$/yr
+S4_biomass+co2+water: 1145.976 Mt/yr  (bio=201.8, co2=688.5, wat=251.1 Mt CO2-eq / 932 Mt water)  cost=10.41 bn$/yr
+S1_biomass_250km: 431.250 Mt/yr  (bio=194.5, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.91 bn$/yr
+S2_co2_250km: 493.214 Mt/yr  (bio=0.0, co2=257.1, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.30 bn$/yr
+S3_biomass+co2_250km: 931.692 Mt/yr  (bio=508.2, co2=578.1, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=9.09 bn$/yr
+S4_biomass+co2+water_250km: 975.377 Mt/yr  (bio=343.7, co2=520.8, wat=251.0 Mt CO2-eq / 1160 Mt water)  cost=7.73 bn$/yr
+
+--- national BECCS potential by scenario (Mt/yr) ---
+                  scenario  total_Mt_yr  biomass_transport  co2_transport  water_transport  water_transport_Mt_water
+                  S0_local   244.119571           0.000000       0.000000         0.000000                   0.00000
+                S1_biomass   679.145735         435.026165       0.000000         0.000000                   0.00000
+                    S2_co2   740.722730           0.000000     496.603158         0.000000                   0.00000
+            S3_biomass+co2  1145.976391         405.253620     766.924871         0.000000                   0.00000
+      S4_biomass+co2+water  1145.976392         201.847962     688.466840       251.051047                 932.15752
+          S1_biomass_250km   431.249683         194.539792       0.000000         0.000000                   0.00000
+              S2_co2_250km   493.214142           0.000000     257.131156         0.000000                   0.00000
+      S3_biomass+co2_250km   931.692335         508.152927     578.147197         0.000000                   0.00000
+S4_biomass+co2+water_250km   975.377294         343.697609     520.838724       251.027738                1159.81917
+
+saved ../results_v2_new/sensitivity_results/STOCAP50/BECCS_scenarios_summary.xlsx & ../results_v2_new/sensitivity_results/STOCAP50/BECCS_scenario_city.xlsx & ../results_v2_new/sensitivity_results/STOCAP50/BECCS_coordination_result.xlsx
+    >>> 3_export_8class.py: python 3_export_8class.py
+saved: ../results_v2_new/sensitivity_results/STOCAP50/Fig3_6_prefecture_8class.xlsx
+saved: ../results_v2_new/sensitivity_results/STOCAP50/prefecture_8class.csv
+
+=== eight-class state distribution ===
+             class  n_cities    cap_GW     emis_Mt  emis_pct   cap_pct  city_pct  class_id
+bio+sto+water-rich        11   3.72100   12.516604  0.291366  0.330903  3.618421         1
+       water-short         4   4.49450   14.544433  0.338571  0.399690  1.315789         2
+     bio+sto-short       128 456.33564 1674.891341 38.988751 40.581306 42.105263         3
+         bio-short        24  64.38670  252.938658  5.888001  5.725821  7.894737         4
+         sto-short        23  12.68344   47.543859  1.106744  1.127921  7.565789         5
+   bio+water-short        28 147.22670  584.541558 13.607178 13.092670  9.210526         6
+   sto+water-short         3   0.71960    2.762986  0.064318  0.063993  0.986842         7
+            vacuum        83 434.92960 1706.092867 39.715071 38.677696 27.302632         8
+
+======================================================================
+SCENARIO: STOCAP25  (Storage potential 25%)
+  params: {'BECCS_EFR': '0.50', 'BECCS_LIFE': '20', 'BECCS_BIO_FACTOR': '1.0', 'BECCS_STO_FACTOR': '0.25', 'label': 'Storage potential 25%'}
+  folder: ../results_v2_new/sensitivity_results/STOCAP25
+======================================================================
+    >>> 1_compute_aggregate_city.py: python 1_compute_aggregate_city.py
+water: new basis (ChinaWR TWR + HSWUD, plant Thiessen) -> 2171 / 2171 plants matched
+电厂数: 2171, 地级市数: 304
+数据来源分布:
+数据来源
+ChinaWR+HSWUD(plant Thiessen)    304
+
+地级市级 总压 WSR (EFR 20/37/50/80):
+  EFR20: WSR>1 = 24.3% | 中位 0.553
+  EFR00: WSR>1 = 18.4% | 中位 0.353
+  EFR37: WSR>1 = 33.6% | 中位 0.723
+  EFR50: WSR>1 = 38.8% | 中位 0.853
+  EFR80: WSR>1 = 66.8% | 中位 1.153
+
+水资源口径:
+  新 water_thiessen_cityclip.xlsx | 电厂级 R=R_亿m3, U=U_竞争_亿m3 (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值)
+  城市值 = 本市各电厂自身值之和(非整市总量)
+  R 总和=16084 亿m3   U 总和=3259 亿m3
+
+市级 BCR/SER:
+  BCR_city>1: 13.5% | SER_city>1: 19.4%
+
+电厂级 vs 城市级 (三比例):
+                电厂级       城市级(按城市)       城市级(按电厂)
+  BCR         30.0%          13.5%           6.6%
+  SER         14.4%          19.4%          18.8%
+  WSR50       49.1%          38.8%          51.7%
+  注: 电厂级用各厂自有资源; 城市级=同市各厂资源/需求分别求和后相除
+
+saved: ../results_v2_new/sensitivity_results/STOCAP25/plant_city_hswud_aggregated.xlsx
+    >>> 4_compute_beccs_potential.py: python 4_compute_beccs_potential.py
+plants: 2171 | cities: 304
+national: storage 465 | water 3090 | biomass 1035 Mt/yr
+=== final annual BECCS potential (min of three limits; biogenic C only; fixed generation) ===
+  national: 168 Mt CO2/yr
+
+limiting resource (cities):
+limiting
+sto_Mt_yr    236
+wat_Mt_yr     40
+bio_Mt_yr     28
+
+top 10 cities by potential:
+city    GW  sto_Mt_yr  wat_Mt_yr  bio_Mt_yr  BECCS_Mt_yr
+ 哈尔滨  4.39      19.68      22.57      17.99        19.68
+  唐山  9.00      15.76      19.13       6.19         9.92
+  榆林 22.36       8.51     108.93       5.56         8.48
+锡林郭勒 13.75      19.28      67.13       2.33         7.38
+  塔城  1.38       7.23       7.07       4.31         7.05
+ 驻马店  1.32       6.38       6.80       6.80         6.38
+  四平  2.59       6.43      13.20       5.85         6.33
+  南阳  4.48       6.25      19.30      20.34         6.25
+  阜阳  3.24      14.24      12.64       5.87         6.09
+  荆州  2.30       5.35      10.82       4.55         5.35
+
+saved ../results_v2_new/sensitivity_results/STOCAP25/BECCS_potential_plant.xlsx & ../results_v2_new/sensitivity_results/STOCAP25/BECCS_potential_city.xlsx
+    >>> 5_optimize_beccs_multi.py: python 5_optimize_beccs_multi.py
+S0_local: 215.279 Mt/yr  (bio=0.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.00 bn$/yr
+S1_biomass: 552.355 Mt/yr  (bio=337.4, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=11.64 bn$/yr
+S2_co2: 740.723 Mt/yr  (bio=0.0, co2=525.4, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=6.65 bn$/yr
+S3_biomass+co2: 1145.976 Mt/yr  (bio=405.3, co2=813.7, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=14.58 bn$/yr
+S4_biomass+co2+water: 1145.976 Mt/yr  (bio=200.8, co2=744.3, wat=252.6 Mt CO2-eq / 965 Mt water)  cost=12.02 bn$/yr
+S1_biomass_250km: 376.005 Mt/yr  (bio=163.6, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.58 bn$/yr
+S2_co2_250km: 470.139 Mt/yr  (bio=0.0, co2=269.8, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.44 bn$/yr
+S3_biomass+co2_250km: 899.061 Mt/yr  (bio=528.1, co2=628.9, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=9.99 bn$/yr
+S4_biomass+co2+water_250km: 949.826 Mt/yr  (bio=379.4, co2=602.5, wat=262.0 Mt CO2-eq / 1245 Mt water)  cost=8.91 bn$/yr
+
+--- national BECCS potential by scenario (Mt/yr) ---
+                  scenario  total_Mt_yr  biomass_transport  co2_transport  water_transport  water_transport_Mt_water
+                  S0_local   215.279116           0.000000       0.000000         0.000000                  0.000000
+                S1_biomass   552.355333         337.350631       0.000000         0.000000                  0.000000
+                    S2_co2   740.722720           0.000000     525.443604         0.000000                  0.000000
+            S3_biomass+co2  1145.976393         405.253621     813.695421         0.000000                  0.000000
+      S4_biomass+co2+water  1145.976393         200.794976     744.250130       252.645996                964.634089
+          S1_biomass_250km   376.004643         163.583381       0.000000         0.000000                  0.000000
+              S2_co2_250km   470.139160           0.000000     269.764162         0.000000                  0.000000
+      S3_biomass+co2_250km   899.061207         528.132846     628.901558         0.000000                  0.000000
+S4_biomass+co2+water_250km   949.826242         379.425308     602.548011       262.041914               1245.250860
+
+saved ../results_v2_new/sensitivity_results/STOCAP25/BECCS_scenarios_summary.xlsx & ../results_v2_new/sensitivity_results/STOCAP25/BECCS_scenario_city.xlsx & ../results_v2_new/sensitivity_results/STOCAP25/BECCS_coordination_result.xlsx
+    >>> 3_export_8class.py: python 3_export_8class.py
+saved: ../results_v2_new/sensitivity_results/STOCAP25/Fig3_6_prefecture_8class.xlsx
+saved: ../results_v2_new/sensitivity_results/STOCAP25/prefecture_8class.csv
+
+=== eight-class state distribution ===
+             class  n_cities    cap_GW     emis_Mt  emis_pct   cap_pct  city_pct  class_id
+bio+sto+water-rich        11   3.72100   12.516604  0.291366  0.330903  3.618421         1
+       water-short         4   4.49450   14.544433  0.338571  0.399690  1.315789         2
+     bio+sto-short       131 461.07614 1692.137082 39.390203 41.002872 43.092105         3
+         bio-short        21  59.64620  235.692917  5.486548  5.304255  6.907895         4
+         sto-short        23  12.68344   47.543859  1.106744  1.127921  7.565789         5
+   bio+water-short        23  99.02070  378.449944  8.809700  8.805776  7.565789         6
+   sto+water-short         3   0.71960    2.762986  0.064318  0.063993  0.986842         7
+            vacuum        88 483.13560 1912.184481 44.512549 42.964590 28.947368         8
+
+======================================================================
+SCENARIO: GEN50  (Generation 50%)
+  params: {'BECCS_EFR': '0.50', 'BECCS_LIFE': '20', 'BECCS_BIO_FACTOR': '1.0', 'BECCS_GEN_FACTOR': '0.50', 'label': 'Generation 50%'}
+  folder: ../results_v2_new/sensitivity_results/GEN50
+======================================================================
+    >>> 1_compute_aggregate_city.py: python 1_compute_aggregate_city.py
+water: new basis (ChinaWR TWR + HSWUD, plant Thiessen) -> 2171 / 2171 plants matched
+电厂数: 2171, 地级市数: 304
+数据来源分布:
+数据来源
+ChinaWR+HSWUD(plant Thiessen)    304
+
+地级市级 总压 WSR (EFR 20/37/50/80):
+  EFR20: WSR>1 = 20.7% | 中位 0.511
+  EFR00: WSR>1 = 15.1% | 中位 0.311
+  EFR37: WSR>1 = 28.9% | 中位 0.681
+  EFR50: WSR>1 = 35.9% | 中位 0.811
+  EFR80: WSR>1 = 64.1% | 中位 1.111
+
+水资源口径:
+  新 water_thiessen_cityclip.xlsx | 电厂级 R=R_亿m3, U=U_竞争_亿m3 (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值)
+  城市值 = 本市各电厂自身值之和(非整市总量)
+  R 总和=16084 亿m3   U 总和=3259 亿m3
+
+市级 BCR/SER:
+  BCR_city>1: 31.2% | SER_city>1: 25.0%
+
+电厂级 vs 城市级 (三比例):
+                电厂级       城市级(按城市)       城市级(按电厂)
+  BCR         36.8%          31.2%          20.5%
+  SER         17.5%          25.0%          26.5%
+  WSR50       46.7%          35.9%          49.1%
+  注: 电厂级用各厂自有资源; 城市级=同市各厂资源/需求分别求和后相除
+
+saved: ../results_v2_new/sensitivity_results/GEN50/plant_city_hswud_aggregated.xlsx
+    >>> 4_compute_beccs_potential.py: python 4_compute_beccs_potential.py
+plants: 2171 | cities: 304
+national: storage 360 | water 1606 | biomass 894 Mt/yr
+=== final annual BECCS potential (min of three limits; biogenic C only; fixed generation) ===
+  national: 169 Mt CO2/yr
+
+limiting resource (cities):
+limiting
+sto_Mt_yr    238
+wat_Mt_yr     40
+bio_Mt_yr     26
+
+top 10 cities by potential:
+city    GW  sto_Mt_yr  wat_Mt_yr  bio_Mt_yr  BECCS_Mt_yr
+ 哈尔滨  4.39      10.91      11.29      11.29        10.91
+  重庆 15.25      10.12      37.34      20.11        10.12
+  唐山  9.00      10.18       9.56       6.19         9.26
+  晋中  6.17       8.80      15.36       2.21         7.72
+锡林郭勒 13.75       9.64      33.57       2.33         7.19
+  榆林 22.36       7.03      54.47       5.56         6.89
+  阜阳  3.24       7.82       6.32       5.87         5.98
+  南阳  4.48       5.70      10.32      10.32         5.70
+  合肥  4.65       5.19      10.74       4.09         5.01
+  沧州  5.36      13.10       6.29       4.95         4.95
+
+saved ../results_v2_new/sensitivity_results/GEN50/BECCS_potential_plant.xlsx & ../results_v2_new/sensitivity_results/GEN50/BECCS_potential_city.xlsx
+    >>> 5_optimize_beccs_multi.py: python 5_optimize_beccs_multi.py
+S0_local: 233.580 Mt/yr  (bio=0.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.00 bn$/yr
+S1_biomass: 538.011 Mt/yr  (bio=304.4, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=10.52 bn$/yr
+S2_co2: 628.653 Mt/yr  (bio=0.0, co2=395.1, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=3.92 bn$/yr
+S3_biomass+co2: 1145.976 Mt/yr  (bio=517.3, co2=711.8, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=21.57 bn$/yr
+S4_biomass+co2+water: 1145.976 Mt/yr  (bio=314.6, co2=698.8, wat=259.3 Mt CO2-eq / 1027 Mt water)  cost=14.03 bn$/yr
+S1_biomass_250km: 344.662 Mt/yr  (bio=120.2, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.21 bn$/yr
+S2_co2_250km: 442.666 Mt/yr  (bio=0.0, co2=221.1, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.10 bn$/yr
+S3_biomass+co2_250km: 781.753 Mt/yr  (bio=404.2, co2=465.4, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=7.13 bn$/yr
+S4_biomass+co2+water_250km: 958.778 Mt/yr  (bio=421.8, co2=557.0, wat=285.4 Mt CO2-eq / 1861 Mt water)  cost=9.70 bn$/yr
+
+--- national BECCS potential by scenario (Mt/yr) ---
+                  scenario  total_Mt_yr  biomass_transport  co2_transport  water_transport  water_transport_Mt_water
+                  S0_local   233.580191           0.000000       0.000000         0.000000                  0.000000
+                S1_biomass   538.010531         304.430341       0.000000         0.000000                  0.000000
+                    S2_co2   628.652612           0.000000     395.072421         0.000000                  0.000000
+            S3_biomass+co2  1145.976395         517.323737     711.833953         0.000000                  0.000000
+      S4_biomass+co2+water  1145.976393         314.604261     698.780430       259.308312               1027.416000
+          S1_biomass_250km   344.661542         120.233599       0.000000         0.000000                  0.000000
+              S2_co2_250km   442.665839           0.000000     221.126571         0.000000                  0.000000
+      S3_biomass+co2_250km   781.752648         404.158731     465.422136         0.000000                  0.000000
+S4_biomass+co2+water_250km   958.778073         421.777283     557.002986       285.350874               1860.679525
+
+saved ../results_v2_new/sensitivity_results/GEN50/BECCS_scenarios_summary.xlsx & ../results_v2_new/sensitivity_results/GEN50/BECCS_scenario_city.xlsx & ../results_v2_new/sensitivity_results/GEN50/BECCS_coordination_result.xlsx
+    >>> 3_export_8class.py: python 3_export_8class.py
+saved: ../results_v2_new/sensitivity_results/GEN50/Fig3_6_prefecture_8class.xlsx
+saved: ../results_v2_new/sensitivity_results/GEN50/prefecture_8class.csv
+
+=== eight-class state distribution ===
+             class  n_cities    cap_GW     emis_Mt  emis_pct   cap_pct  city_pct  class_id
+bio+sto+water-rich        22  26.32600   91.659049  2.133674  2.341135  7.236842         1
+       water-short        12  23.18300   81.261496  1.891636  2.061633  3.947368         2
+     bio+sto-short       102 424.27637 1562.890950 36.381563 37.730319 33.552632         3
+         bio-short        20  70.85900  289.547493  6.740195  6.301394  6.578947         4
+         sto-short        51  55.07411  199.652073  4.647576  4.897665 16.776316         5
+   bio+water-short        22 133.15550  540.971699 12.592943 11.841337  7.236842         6
+   sto+water-short        10  19.65760   78.500159  1.827356  1.748124  3.289474         7
+            vacuum        65 371.96560 1451.349387 33.785057 33.078393 21.381579         8
+
+======================================================================
+SCENARIO: GEN25  (Generation 25%)
+  params: {'BECCS_EFR': '0.50', 'BECCS_LIFE': '20', 'BECCS_BIO_FACTOR': '1.0', 'BECCS_GEN_FACTOR': '0.25', 'label': 'Generation 25%'}
+  folder: ../results_v2_new/sensitivity_results/GEN25
+======================================================================
+    >>> 1_compute_aggregate_city.py: python 1_compute_aggregate_city.py
+water: new basis (ChinaWR TWR + HSWUD, plant Thiessen) -> 2171 / 2171 plants matched
+电厂数: 2171, 地级市数: 304
+数据来源分布:
+数据来源
+ChinaWR+HSWUD(plant Thiessen)    304
+
+地级市级 总压 WSR (EFR 20/37/50/80):
+  EFR20: WSR>1 = 17.1% | 中位 0.505
+  EFR00: WSR>1 = 11.8% | 中位 0.305
+  EFR37: WSR>1 = 28.3% | 中位 0.675
+  EFR50: WSR>1 = 33.2% | 中位 0.805
+  EFR80: WSR>1 = 62.8% | 中位 1.105
+
+水资源口径:
+  新 water_thiessen_cityclip.xlsx | 电厂级 R=R_亿m3, U=U_竞争_亿m3 (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值)
+  城市值 = 本市各电厂自身值之和(非整市总量)
+  R 总和=16084 亿m3   U 总和=3259 亿m3
+
+市级 BCR/SER:
+  BCR_city>1: 49.7% | SER_city>1: 25.0%
+
+电厂级 vs 城市级 (三比例):
+                电厂级       城市级(按城市)       城市级(按电厂)
+  BCR         44.5%          49.7%          39.7%
+  SER         17.5%          25.0%          26.5%
+  WSR50       44.2%          33.2%          46.8%
+  注: 电厂级用各厂自有资源; 城市级=同市各厂资源/需求分别求和后相除
+
+saved: ../results_v2_new/sensitivity_results/GEN25/plant_city_hswud_aggregated.xlsx
+    >>> 4_compute_beccs_potential.py: python 4_compute_beccs_potential.py
+plants: 2171 | cities: 304
+national: storage 203 | water 818 | biomass 673 Mt/yr
+=== final annual BECCS potential (min of three limits; biogenic C only; fixed generation) ===
+  national: 110 Mt CO2/yr
+
+limiting resource (cities):
+limiting
+sto_Mt_yr    243
+wat_Mt_yr     44
+bio_Mt_yr     17
+
+top 10 cities by potential:
+city    GW  sto_Mt_yr  wat_Mt_yr  bio_Mt_yr  BECCS_Mt_yr
+  重庆 15.25       7.48      18.67      18.67         7.48
+ 哈尔滨  4.39       5.45       5.64       5.64         5.45
+  晋中  6.17       4.96       7.68       2.21         4.91
+  榆林 22.36       4.95      27.23       5.56         4.88
+锡林郭勒 13.75       4.82      16.78       2.33         4.82
+  唐山  9.00       5.09       4.78       6.19         4.78
+  天津 12.44       8.99       4.26       4.14         4.26
+  哈密  8.32       6.44      10.21       0.76         3.73
+鄂尔多斯 25.75       5.50      30.15       0.92         3.16
+  阜阳  3.24       3.91       3.16       3.91         3.16
+
+saved ../results_v2_new/sensitivity_results/GEN25/BECCS_potential_plant.xlsx & ../results_v2_new/sensitivity_results/GEN25/BECCS_potential_city.xlsx
+    >>> 5_optimize_beccs_multi.py: python 5_optimize_beccs_multi.py
+S0_local: 170.469 Mt/yr  (bio=0.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.00 bn$/yr
+S1_biomass: 300.406 Mt/yr  (bio=129.9, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=3.30 bn$/yr
+S2_co2: 456.269 Mt/yr  (bio=0.0, co2=285.8, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=2.80 bn$/yr
+S3_biomass+co2: 818.103 Mt/yr  (bio=361.8, co2=517.7, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=14.16 bn$/yr
+S4_biomass+co2+water: 1145.976 Mt/yr  (bio=508.0, co2=730.2, wat=351.2 Mt CO2-eq / 2328 Mt water)  cost=30.06 bn$/yr
+S1_biomass_250km: 224.319 Mt/yr  (bio=62.5, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.64 bn$/yr
+S2_co2_250km: 329.928 Mt/yr  (bio=0.0, co2=166.4, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.83 bn$/yr
+S3_biomass+co2_250km: 479.285 Mt/yr  (bio=173.1, co2=274.5, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=3.10 bn$/yr
+S4_biomass+co2+water_250km: 801.782 Mt/yr  (bio=487.3, co2=477.0, wat=323.0 Mt CO2-eq / 3725 Mt water)  cost=12.23 bn$/yr
+
+--- national BECCS potential by scenario (Mt/yr) ---
+                  scenario  total_Mt_yr  biomass_transport  co2_transport  water_transport  water_transport_Mt_water
+                  S0_local   170.469138           0.000000       0.000000         0.000000                  0.000000
+                S1_biomass   300.406302         129.937164       0.000000         0.000000                  0.000000
+                    S2_co2   456.269105           0.000000     285.799967         0.000000                  0.000000
+            S3_biomass+co2   818.103108         361.833935     517.696735         0.000000                  0.000000
+      S4_biomass+co2+water  1145.976393         508.013115     730.239009       351.206042               2327.747085
+          S1_biomass_250km   224.318763          62.484021       0.000000         0.000000                  0.000000
+              S2_co2_250km   329.928180           0.000000     166.410871         0.000000                  0.000000
+      S3_biomass+co2_250km   479.284848         173.064901     274.453541         0.000000                  0.000000
+S4_biomass+co2+water_250km   801.782303         487.320126     476.990150       323.017059               3724.627507
+
+saved ../results_v2_new/sensitivity_results/GEN25/BECCS_scenarios_summary.xlsx & ../results_v2_new/sensitivity_results/GEN25/BECCS_scenario_city.xlsx & ../results_v2_new/sensitivity_results/GEN25/BECCS_coordination_result.xlsx
+    >>> 3_export_8class.py: python 3_export_8class.py
+saved: ../results_v2_new/sensitivity_results/GEN25/Fig3_6_prefecture_8class.xlsx
+saved: ../results_v2_new/sensitivity_results/GEN25/prefecture_8class.csv
+
+=== eight-class state distribution ===
+             class  n_cities    cap_GW     emis_Mt  emis_pct   cap_pct  city_pct  class_id
+bio+sto+water-rich        30  44.04230  156.822127  3.650564  3.916622  9.868421         1
+       water-short        18  43.40150  164.552653  3.830519  3.859636  5.921053         2
+     bio+sto-short        74 339.25537 1256.335774 29.245457 30.169517 24.342105         3
+         bio-short        14  60.14470  253.734353  5.906524  5.348586  4.605263         4
+         sto-short        85 158.92511  578.621360 13.469366 14.132993 27.960526         5
+   bio+water-short        14 105.93500  428.330604  9.970841  9.420655  4.605263         6
+   sto+water-short        18  37.14660  140.706372  3.275416  3.303396  5.921053         7
+            vacuum        51 335.64660 1316.729063 30.651314 29.848594 16.776316         8
+
+======================================================================
+SCENARIO: DESAL  (Desalination (coastal water unlimited))
+  params: {'BECCS_EFR': '0.50', 'BECCS_LIFE': '20', 'BECCS_BIO_FACTOR': '1.0', 'BECCS_DESAL': '1', 'label': 'Desalination (coastal water unlimited)'}
+  folder: ../results_v2_new/sensitivity_results/DESAL
+======================================================================
+    >>> 1_compute_aggregate_city.py: python 1_compute_aggregate_city.py
+water: new basis (ChinaWR TWR + HSWUD, plant Thiessen) -> 2171 / 2171 plants matched
+电厂数: 2171, 地级市数: 304
+数据来源分布:
+数据来源
+ChinaWR+HSWUD(plant Thiessen)    304
+
+地级市级 总压 WSR (EFR 20/37/50/80):
+  EFR20: WSR>1 = 24.3% | 中位 0.553
+  EFR00: WSR>1 = 18.4% | 中位 0.353
+  EFR37: WSR>1 = 33.6% | 中位 0.723
+  EFR50: WSR>1 = 38.8% | 中位 0.853
+  EFR80: WSR>1 = 66.8% | 中位 1.153
+
+水资源口径:
+  新 water_thiessen_cityclip.xlsx | 电厂级 R=R_亿m3, U=U_竞争_亿m3 (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值)
+  城市值 = 本市各电厂自身值之和(非整市总量)
+  R 总和=16084 亿m3   U 总和=3259 亿m3
+
+市级 BCR/SER:
+  BCR_city>1: 13.5% | SER_city>1: 25.0%
+
+电厂级 vs 城市级 (三比例):
+                电厂级       城市级(按城市)       城市级(按电厂)
+  BCR         30.0%          13.5%           6.6%
+  SER         17.5%          25.0%          26.5%
+  WSR50       49.1%          38.8%          51.7%
+  注: 电厂级用各厂自有资源; 城市级=同市各厂资源/需求分别求和后相除
+
+saved: ../results_v2_new/sensitivity_results/DESAL/plant_city_hswud_aggregated.xlsx
+    >>> 4_compute_beccs_potential.py: python 4_compute_beccs_potential.py
+plants: 2171 | cities: 304
+national: storage 635 | water 3282 | biomass 1035 Mt/yr
+=== final annual BECCS potential (min of three limits; biogenic C only; fixed generation) ===
+  national: 273 Mt CO2/yr
+
+limiting resource (cities):
+limiting
+sto_Mt_yr    229
+wat_Mt_yr     38
+bio_Mt_yr     37
+
+top 10 cities by potential:
+city    GW  sto_Mt_yr  wat_Mt_yr  bio_Mt_yr  BECCS_Mt_yr
+ 哈尔滨  4.39      21.81      22.57      17.99        21.81
+  天津 12.44      35.95      59.31       4.14        20.53
+  唐山  9.00      20.37      44.85       6.19        13.57
+  重庆 15.25      11.54      74.68      20.11        11.54
+  南阳  4.48      11.40      19.30      20.34        11.40
+  潍坊  5.96      10.92      29.05      11.11        10.92
+  榆林 22.36      10.92     108.93       5.56        10.79
+  晋中  6.17      14.35      30.71       2.21         9.89
+  东营  5.59      14.42      26.54       2.63         9.58
+锡林郭勒 13.75      19.28      67.13       2.33         7.38
+
+saved ../results_v2_new/sensitivity_results/DESAL/BECCS_potential_plant.xlsx & ../results_v2_new/sensitivity_results/DESAL/BECCS_potential_city.xlsx
+    >>> 5_optimize_beccs_multi.py: python 5_optimize_beccs_multi.py
+S0_local: 290.739 Mt/yr  (bio=0.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.00 bn$/yr
+S1_biomass: 1025.931 Mt/yr  (bio=735.2, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=37.04 bn$/yr
+S2_co2: 756.821 Mt/yr  (bio=0.0, co2=466.1, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=4.65 bn$/yr
+S3_biomass+co2: 1145.976 Mt/yr  (bio=389.2, co2=674.5, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=11.20 bn$/yr
+S4_biomass+co2+water: 1145.976 Mt/yr  (bio=200.0, co2=643.1, wat=238.8 Mt CO2-eq / 876 Mt water)  cost=9.12 bn$/yr
+S1_biomass_250km: 591.993 Mt/yr  (bio=320.5, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=3.61 bn$/yr
+S2_co2_250km: 539.241 Mt/yr  (bio=0.0, co2=263.8, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.32 bn$/yr
+S3_biomass+co2_250km: 974.254 Mt/yr  (bio=488.7, co2=515.8, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=8.34 bn$/yr
+S4_biomass+co2+water_250km: 1016.150 Mt/yr  (bio=343.7, co2=521.9, wat=235.6 Mt CO2-eq / 1062 Mt water)  cost=7.46 bn$/yr
+
+--- national BECCS potential by scenario (Mt/yr) ---
+                  scenario  total_Mt_yr  biomass_transport  co2_transport  water_transport  water_transport_Mt_water
+                  S0_local   290.739456           0.000000       0.000000         0.000000                  0.000000
+                S1_biomass  1025.931314         735.191854       0.000000         0.000000                  0.000000
+                    S2_co2   756.820865           0.000000     466.081409         0.000000                  0.000000
+            S3_biomass+co2  1145.976392         389.155514     674.462448         0.000000                  0.000000
+      S4_biomass+co2+water  1145.976393         200.038031     643.108406       238.806693                875.627552
+          S1_biomass_250km   591.992622         320.517676       0.000000         0.000000                  0.000000
+              S2_co2_250km   539.240981           0.000000     263.804371         0.000000                  0.000000
+      S3_biomass+co2_250km   974.254143         488.681624     515.824488         0.000000                  0.000000
+S4_biomass+co2+water_250km  1016.149714         343.691564     521.927024       235.622633               1062.084266
+
+saved ../results_v2_new/sensitivity_results/DESAL/BECCS_scenarios_summary.xlsx & ../results_v2_new/sensitivity_results/DESAL/BECCS_scenario_city.xlsx & ../results_v2_new/sensitivity_results/DESAL/BECCS_coordination_result.xlsx
+    >>> 3_export_8class.py: python 3_export_8class.py
+saved: ../results_v2_new/sensitivity_results/DESAL/Fig3_6_prefecture_8class.xlsx
+saved: ../results_v2_new/sensitivity_results/DESAL/prefecture_8class.csv
+
+=== eight-class state distribution ===
+             class  n_cities    cap_GW     emis_Mt  emis_pct   cap_pct  city_pct  class_id
+bio+sto+water-rich        11   3.72100   12.516604  0.291366  0.330903  3.618421         1
+       water-short         4   4.49450   14.544433  0.338571  0.399690  1.315789         2
+     bio+sto-short       130 487.57504 1784.207599 41.533456 43.359383 42.763158         3
+         bio-short        33 109.01380  423.991079  9.869824  9.694449 10.855263         4
+         sto-short        23  12.68344   47.543859  1.106744  1.127921  7.565789         5
+   bio+water-short        28 136.29420  552.387621 12.858687 12.120457  9.210526         6
+   sto+water-short         3   0.71960    2.762986  0.064318  0.063993  0.986842         7
+            vacuum        72 369.99560 1457.878124 33.937035 32.903204 23.684211         8
+
+======================================================================
+SCENARIO: EWR  (CO2-EWR water recovery (1 t water/t CO2))
+  params: {'BECCS_EFR': '0.50', 'BECCS_LIFE': '20', 'BECCS_BIO_FACTOR': '1.0', 'BECCS_EWR': '1.0', 'label': 'CO2-EWR water recovery (1 t water/t CO2)'}
+  folder: ../results_v2_new/sensitivity_results/EWR
+======================================================================
+    >>> 1_compute_aggregate_city.py: python 1_compute_aggregate_city.py
+water: new basis (ChinaWR TWR + HSWUD, plant Thiessen) -> 2171 / 2171 plants matched
+电厂数: 2171, 地级市数: 304
+数据来源分布:
+数据来源
+ChinaWR+HSWUD(plant Thiessen)    304
+
+地级市级 总压 WSR (EFR 20/37/50/80):
+  EFR20: WSR>1 = 24.3% | 中位 0.553
+  EFR00: WSR>1 = 18.4% | 中位 0.353
+  EFR37: WSR>1 = 33.6% | 中位 0.723
+  EFR50: WSR>1 = 38.8% | 中位 0.853
+  EFR80: WSR>1 = 66.8% | 中位 1.153
+
+水资源口径:
+  新 water_thiessen_cityclip.xlsx | 电厂级 R=R_亿m3, U=U_竞争_亿m3 (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值)
+  城市值 = 本市各电厂自身值之和(非整市总量)
+  R 总和=16084 亿m3   U 总和=3259 亿m3
+
+市级 BCR/SER:
+  BCR_city>1: 13.5% | SER_city>1: 25.0%
+
+电厂级 vs 城市级 (三比例):
+                电厂级       城市级(按城市)       城市级(按电厂)
+  BCR         30.0%          13.5%           6.6%
+  SER         17.5%          25.0%          26.5%
+  WSR50       49.1%          38.8%          51.7%
+  注: 电厂级用各厂自有资源; 城市级=同市各厂资源/需求分别求和后相除
+
+saved: ../results_v2_new/sensitivity_results/EWR/plant_city_hswud_aggregated.xlsx
+    >>> 4_compute_beccs_potential.py: python 4_compute_beccs_potential.py
+plants: 2171 | cities: 304
+national: storage 635 | water 3098 | biomass 1035 Mt/yr
+=== final annual BECCS potential (min of three limits; biogenic C only; fixed generation) ===
+  national: 238 Mt CO2/yr
+
+limiting resource (cities):
+limiting
+sto_Mt_yr    228
+wat_Mt_yr     40
+bio_Mt_yr     36
+
+top 10 cities by potential:
+city    GW  sto_Mt_yr  wat_Mt_yr  bio_Mt_yr  BECCS_Mt_yr
+ 哈尔滨  4.39      21.81      22.57      17.99        21.81
+  唐山  9.00      20.37      19.13       6.19        12.33
+  重庆 15.25      11.54      74.68      20.11        11.54
+  南阳  4.48      11.40      19.30      20.34        11.40
+  榆林 22.36      10.92     108.93       5.56        10.79
+  晋中  6.17      14.35      30.71       2.21         9.89
+  合肥  4.65      10.39      19.73       4.09         7.95
+锡林郭勒 13.75      19.28      67.13       2.33         7.38
+  塔城  1.38       7.23       7.25       4.31         7.23
+  四平  2.59       8.44      13.34       5.85         7.06
+
+saved ../results_v2_new/sensitivity_results/EWR/BECCS_potential_plant.xlsx & ../results_v2_new/sensitivity_results/EWR/BECCS_potential_city.xlsx
+    >>> 5_optimize_beccs_multi.py: python 5_optimize_beccs_multi.py
+S0_local: 274.680 Mt/yr  (bio=0.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.00 bn$/yr
+S1_biomass: 906.142 Mt/yr  (bio=631.5, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=30.40 bn$/yr
+S2_co2: 740.761 Mt/yr  (bio=0.0, co2=466.1, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=4.65 bn$/yr
+S3_biomass+co2: 1145.976 Mt/yr  (bio=406.8, co2=712.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=11.63 bn$/yr
+S4_biomass+co2+water: 1145.976 Mt/yr  (bio=199.1, co2=641.9, wat=255.4 Mt CO2-eq / 954 Mt water)  cost=9.20 bn$/yr
+S1_biomass_250km: 507.079 Mt/yr  (bio=241.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=2.47 bn$/yr
+S2_co2_250km: 523.181 Mt/yr  (bio=0.0, co2=263.8, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.32 bn$/yr
+S3_biomass+co2_250km: 974.400 Mt/yr  (bio=513.8, co2=555.8, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=8.86 bn$/yr
+S4_biomass+co2+water_250km: 1016.150 Mt/yr  (bio=341.0, co2=522.4, wat=258.5 Mt CO2-eq / 1166 Mt water)  cost=7.57 bn$/yr
+
+--- national BECCS potential by scenario (Mt/yr) ---
+                  scenario  total_Mt_yr  biomass_transport  co2_transport  water_transport  water_transport_Mt_water
+                  S0_local   274.679936           0.000000       0.000000         0.000000                  0.000000
+                S1_biomass   906.142319         631.462378       0.000000         0.000000                  0.000000
+                    S2_co2   740.761347           0.000000     466.081411         0.000000                  0.000000
+            S3_biomass+co2  1145.976392         406.810420     711.993106         0.000000                  0.000000
+      S4_biomass+co2+water  1145.976392         199.070967     641.938095       255.415311                954.158580
+          S1_biomass_250km   507.079343         241.033826       0.000000         0.000000                  0.000000
+              S2_co2_250km   523.181476           0.000000     263.804414         0.000000                  0.000000
+      S3_biomass+co2_250km   974.400299         513.793279     555.813523         0.000000                  0.000000
+S4_biomass+co2+water_250km  1016.149700         341.046195     522.434937       258.530230               1165.898098
+
+saved ../results_v2_new/sensitivity_results/EWR/BECCS_scenarios_summary.xlsx & ../results_v2_new/sensitivity_results/EWR/BECCS_scenario_city.xlsx & ../results_v2_new/sensitivity_results/EWR/BECCS_coordination_result.xlsx
+    >>> 3_export_8class.py: python 3_export_8class.py
+saved: ../results_v2_new/sensitivity_results/EWR/Fig3_6_prefecture_8class.xlsx
+saved: ../results_v2_new/sensitivity_results/EWR/prefecture_8class.csv
+
+=== eight-class state distribution ===
+             class  n_cities    cap_GW     emis_Mt  emis_pct   cap_pct  city_pct  class_id
+bio+sto+water-rich        13   5.90500   18.980706  0.441840  0.525124  4.276316         1
+       water-short         2   2.31050    8.080331  0.188097  0.205470  0.657895         2
+     bio+sto-short       125 447.61304 1645.353073 38.301148 39.805617 41.118421         3
+         bio-short        39 115.42900  450.873155 10.495595 10.264943 12.828947         4
+         sto-short        23  12.68344   47.543859  1.106744  1.127921  7.565789         5
+   bio+water-short        22 129.87900  525.505546 12.232916 11.549962  7.236842         6
+   sto+water-short         3   0.71960    2.762986  0.064318  0.063993  0.986842         7
+            vacuum        77 409.95760 1596.732651 37.169343 36.456970 25.328947         8
+
+======================================================================
+SCENARIO: CONS  (Consumption-based water use)
+  params: {'BECCS_EFR': '0.50', 'BECCS_LIFE': '20', 'BECCS_BIO_FACTOR': '1.0', 'BECCS_CONSUMPTION': '1', 'label': 'Consumption-based water use'}
+  folder: ../results_v2_new/sensitivity_results/CONS
+======================================================================
+    >>> 1_compute_aggregate_city.py: python 1_compute_aggregate_city.py
+water: new basis (ChinaWR TWR + HSWUD, plant Thiessen) -> 2171 / 2171 plants matched
+电厂数: 2171, 地级市数: 304
+数据来源分布:
+数据来源
+ChinaWR+HSWUD(plant Thiessen)    304
+
+地级市级 总压 WSR (EFR 20/37/50/80):
+  EFR20: WSR>1 = 16.8% | 中位 0.506
+  EFR00: WSR>1 = 9.5% | 中位 0.306
+  EFR37: WSR>1 = 24.3% | 中位 0.676
+  EFR50: WSR>1 = 32.6% | 中位 0.806
+  EFR80: WSR>1 = 61.5% | 中位 1.106
+
+水资源口径:
+  新 water_thiessen_cityclip.xlsx | 电厂级 R=R_亿m3, U=U_竞争_亿m3 (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值)
+  城市值 = 本市各电厂自身值之和(非整市总量)
+  R 总和=16084 亿m3   U 总和=3259 亿m3
+
+市级 BCR/SER:
+  BCR_city>1: 13.5% | SER_city>1: 25.0%
+
+电厂级 vs 城市级 (三比例):
+                电厂级       城市级(按城市)       城市级(按电厂)
+  BCR         30.0%          13.5%           6.6%
+  SER         17.5%          25.0%          26.5%
+  WSR50       44.5%          32.6%          44.1%
+  注: 电厂级用各厂自有资源; 城市级=同市各厂资源/需求分别求和后相除
+
+saved: ../results_v2_new/sensitivity_results/CONS/plant_city_hswud_aggregated.xlsx
+    >>> 4_compute_beccs_potential.py: python 4_compute_beccs_potential.py
+plants: 2171 | cities: 304
+national: storage 635 | water 3059 | biomass 1035 Mt/yr
+=== final annual BECCS potential (min of three limits; biogenic C only; fixed generation) ===
+  national: 218 Mt CO2/yr
+
+limiting resource (cities):
+limiting
+sto_Mt_yr    224
+wat_Mt_yr     48
+bio_Mt_yr     32
+
+top 10 cities by potential:
+city    GW  sto_Mt_yr  wat_Mt_yr  bio_Mt_yr  BECCS_Mt_yr
+ 哈尔滨  4.39      21.81      22.57      17.99        21.81
+  重庆 15.25      11.54      74.68      20.11        11.54
+  南阳  4.48      11.40      20.64      20.34        11.40
+  榆林 22.36      10.92     109.23       5.56        10.92
+  晋中  6.17      14.35      30.91       2.21        10.09
+  阜阳  3.24      15.64      15.64       5.87         9.09
+  合肥  4.65      10.39      21.86       4.09         8.46
+锡林郭勒 13.75      19.28      67.13       2.33         7.38
+  塔城  1.38       7.23       7.26       4.31         7.23
+  四平  2.59       8.44      13.77       5.85         7.15
+
+saved ../results_v2_new/sensitivity_results/CONS/BECCS_potential_plant.xlsx & ../results_v2_new/sensitivity_results/CONS/BECCS_potential_city.xlsx
+    >>> 5_optimize_beccs_multi.py: python 5_optimize_beccs_multi.py
+S0_local: 236.714 Mt/yr  (bio=0.0, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=0.00 bn$/yr
+S1_biomass: 837.187 Mt/yr  (bio=600.5, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=29.07 bn$/yr
+S2_co2: 687.926 Mt/yr  (bio=0.0, co2=451.2, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=4.56 bn$/yr
+S3_biomass+co2: 1145.976 Mt/yr  (bio=458.1, co2=771.1, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=12.86 bn$/yr
+S4_biomass+co2+water: 1145.976 Mt/yr  (bio=110.8, co2=648.7, wat=373.0 Mt CO2-eq / 367 Mt water)  cost=7.79 bn$/yr
+S1_biomass_250km: 431.217 Mt/yr  (bio=203.1, co2=0.0, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=2.11 bn$/yr
+S2_co2_250km: 470.941 Mt/yr  (bio=0.0, co2=247.2, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=1.24 bn$/yr
+S3_biomass+co2_250km: 940.104 Mt/yr  (bio=520.1, co2=599.3, wat=0.0 Mt CO2-eq / 0 Mt water)  cost=9.10 bn$/yr
+S4_biomass+co2+water_250km: 1016.150 Mt/yr  (bio=269.1, co2=531.9, wat=374.1 Mt CO2-eq / 370 Mt water)  cost=6.21 bn$/yr
+
+--- national BECCS potential by scenario (Mt/yr) ---
+                  scenario  total_Mt_yr  biomass_transport  co2_transport  water_transport  water_transport_Mt_water
+                  S0_local   236.714348           0.000000       0.000000         0.000000                  0.000000
+                S1_biomass   837.186645         600.472292       0.000000         0.000000                  0.000000
+                    S2_co2   687.926183           0.000000     451.211835         0.000000                  0.000000
+            S3_biomass+co2  1145.976392         458.050175     771.135595         0.000000                  0.000000
+      S4_biomass+co2+water  1145.976392         110.833916     648.681907       373.009260                367.099079
+          S1_biomass_250km   431.216582         203.136632       0.000000         0.000000                  0.000000
+              S2_co2_250km   470.940856           0.000000     247.232280         0.000000                  0.000000
+      S3_biomass+co2_250km   940.103677         520.089328     599.296419         0.000000                  0.000000
+S4_biomass+co2+water_250km  1016.149676         269.131164     531.924369       374.135097                370.241101
+
+saved ../results_v2_new/sensitivity_results/CONS/BECCS_scenarios_summary.xlsx & ../results_v2_new/sensitivity_results/CONS/BECCS_scenario_city.xlsx & ../results_v2_new/sensitivity_results/CONS/BECCS_coordination_result.xlsx
+    >>> 3_export_8class.py: python 3_export_8class.py
+saved: ../results_v2_new/sensitivity_results/CONS/Fig3_6_prefecture_8class.xlsx
+saved: ../results_v2_new/sensitivity_results/CONS/prefecture_8class.csv
+
+=== eight-class state distribution ===
+             class  n_cities    cap_GW     emis_Mt  emis_pct   cap_pct  city_pct  class_id
+bio+sto+water-rich        11   3.72100   12.516604  0.291366  0.330903  3.618421         1
+       water-short         4   4.49450   14.544433  0.338571  0.399690  1.315789         2
+     bio+sto-short       139 508.44204 1884.730224 43.873459 45.215057 45.723684         3
+         bio-short        32  96.70600  381.580417  8.882572  8.599933 10.526316         4
+         sto-short        23  12.68344   47.543859  1.106744  1.127921  7.565789         5
+   bio+water-short        29 148.60200  594.798283 13.845938 13.214973  9.539474         6
+   sto+water-short         3   0.71960    2.762986  0.064318  0.063993  0.986842         7
+            vacuum        63 349.12860 1357.355500 31.597032 31.047530 20.723684         8
+    >>> FigS16 sensitivity combined: python 2_plot_figS16_sensitivity_combined.py
+saved ../results_v2_new/FigS16_sensitivity_combined.png/.pdf/.xlsx
+  情景数: 18
+
+======================================================================
+DONE
+Results under: ../results_v2_new/sensitivity_results
+======================================================================

@@ -8,7 +8,7 @@ Layout (3 rows):
   Row 2: (b) Eight-class resource-state face map (biomass x storage x water).
          (c) Summary bars per resource-state class (cities / capacity / emissions).
   Row 3: (d) Responsibility-capacity mismatch index (MI) face map.
-         (e) Summary bars: burden-carrier vs capacity-surplus shares.
+         (e) Summary bars: burden-bearing vs capacity-surplus shares.
 
 Outputs PNG, PDF, XLSX (same basename)."""
 import os
@@ -23,8 +23,20 @@ from matplotlib.colors import TwoSlopeNorm
 from matplotlib.patches import Patch
 
 import _cols
+import _style
 
 # ===================== embedded shared style =====================
+
+def _read_map(path):
+    """Read a polygon layer simplified for rendering only (as _style.read_map):
+    the prefecture layer has 1.9 M vertices and would otherwise give a PDF of
+    ~60 MB.  BECCS_GEO_SIMPLIFY=0 disables it."""
+    g = gpd.read_file(path, encoding='utf-8')
+    tol = float(os.environ.get('BECCS_GEO_SIMPLIFY', '0.01'))
+    if tol > 0:
+        g['geometry'] = g.geometry.simplify(tol, preserve_topology=True)
+    return g
+
 plt.rcParams.update({
     'font.family': 'sans-serif',
     'font.sans-serif': ['Arial', 'Helvetica', 'DejaVu Sans'],
@@ -81,7 +93,7 @@ SCS_EXTENT = (105, 125, 3, 25)
 
 
 def load_boundaries():
-    bd = gpd.read_file(BOUNDARY_SHP, encoding='utf-8')
+    bd = _read_map(BOUNDARY_SHP)
     if bd.crs is not None and not bd.crs.is_geographic:
         bd = bd.to_crs(epsg=4326)
     return bd
@@ -134,7 +146,7 @@ sc['BCR'] = pd.to_numeric(sc['市级生物质掺烧比_BCR'], errors='coerce') *
 # 1_compute_aggregate_city.py) - do not rescale here
 sc['SER'] = pd.to_numeric(sc['市级封存排放比_SER'], errors='coerce')
 sc['WSR'] = sc[WSR_COL]
-dfp = pd.read_excel(SRC, sheet_name=os.environ.get('BECCS_SHEET', '市域内比较'))
+dfp = _cols.read_plants(SRC)
 dfp = dfp[dfp['序号'].notna()].copy()
 dfp['年碳排放Mt'] = pd.to_numeric(dfp['年碳排放Mt'], errors='coerce')
 dfp['地级市'] = dfp['所在城市'].astype(str)
@@ -148,7 +160,7 @@ sc_plot.loc[sc_plot['BCR'] < 1e-3, 'BCR'] = 1e-3
 sc_plot.loc[sc_plot['SER'] < 1e-3, 'SER'] = 1e-3
 
 # ================ shared shape + matcher ================
-gdf = gpd.read_file(SHAPE, encoding='utf-8')
+gdf = _read_map(SHAPE)
 if gdf.crs is not None and not gdf.crs.is_geographic:
     gdf = gdf.to_crs(epsg=4326)
 
@@ -212,13 +224,10 @@ gdp_map = dict(zip(_gdp['key'], _gdp['GDP_亿元']))
 c8['GDP'] = c8['地级市'].map(_normgdp).map(gdp_map)   # NaN for missing (e.g. 兵团城市)
 tot_gdp8 = c8['GDP'].sum()
 
-cls_colors = {
-    1: '#1a9850', 2: '#00b0f0', 3: '#a50f15', 4: '#8dd3c7',
-    5: '#ffff33', 6: '#fd8d3c', 7: '#984ea3', 8: '#4d4d4d',
-}
+cls_colors = dict(_style.CLASS_COLORS)
 cls_labels = {
     1: 'bio+sto+water-rich', 2: 'water-short', 3: 'bio+sto-short', 4: 'bio-short',
-    5: 'sto-short', 6: 'bio+water-short', 7: 'sto+water-short', 8: 'resources vacuum',
+    5: 'sto-short', 6: 'bio+water-short', 7: 'sto+water-short', 8: 'resource vacuum',
 }
 tot_gw8 = c8['GW'].sum(); tot_emis8 = c8['emissions_Mt'].sum()
 s8 = c8.groupby('class_id').agg(n=('地级市', 'size'), GW=('GW', 'sum'),
@@ -232,7 +241,7 @@ s8['GDP_pct'] = 100 * s8['GDP'] / tot_gdp8
 # ================ (c)(d) mismatch ================
 COL_BIO = _cols.bio_col()
 COL_STO = _cols.sto_col()
-df = pd.read_excel(SRC, sheet_name=os.environ.get('BECCS_SHEET', '市域内比较'))
+df = _cols.read_plants(SRC)
 df = df[df['序号'].notna()].copy()
 for col in ['年碳排放Mt', COL_BIO, COL_STO, '电厂实际装机总功率MW']:
     df[col] = pd.to_numeric(df[col], errors='coerce')
@@ -292,7 +301,7 @@ sc_plot['size'] = 40 + 300 * (sc_plot['EMIS'] - smin) / (smax - smin)
 # draw a soft halo (larger, very transparent) first, then the bubble body, to give
 # a translucent, 3-D volumetric feel; overlap builds density
 
-for status, colr in [('adequate', '#1a9850'), ('constrained', '#d73027')]:
+for status, colr in [('adequate', _style.C_WAT), ('constrained', _style.C_CO2)]:
     sub = sc_plot[sc_plot['water'] == status]
     size_base = np.sqrt(sub['size']) * 3.0
     ax.scatter(sub['BCR'], sub['SER'],
@@ -305,8 +314,8 @@ ax.set_xscale('log'); ax.set_yscale('log')
 ax.set_xlabel('City biomass co-firing ratio (BCR)', fontsize=16)
 ax.set_ylabel('City storage-to-emission ratio (SER)', fontsize=16)
 ax.tick_params(labelsize=16)
-h1 = plt.Line2D([], [], marker='o', ls='', color='#1a9850', label='WSR adequate')
-h2 = plt.Line2D([], [], marker='o', ls='', color='#d73027', label='WSR constrained')
+h1 = plt.Line2D([], [], marker='o', ls='', color=_style.C_WAT, label='WSR adequate')
+h2 = plt.Line2D([], [], marker='o', ls='', color=_style.C_CO2, label='WSR constrained')
 h3 = plt.Line2D([], [], marker='o', ls='', color='gray', markerfacecolor='gray',
                 markersize=10, label='low emissions')
 h4 = plt.Line2D([], [], marker='o', ls='', color='gray', markerfacecolor='gray',
@@ -377,7 +386,7 @@ vmax = max(abs(gdf['MI'].dropna().quantile(0.98)),
            abs(gdf['MI'].dropna().quantile(0.02)), 0.5)
 norm_mi = _TSN(vmin=-vmax, vcenter=0, vmax=vmax)
 # diverging colormap: -1 green (#70ceaa), 0 white, +1 red (#d06e69)
-cmap_mi = LinearSegmentedColormap.from_list('mi', ['#70ceaa', '#ffffff', '#d06e69'])
+cmap_mi = _style.CMAP_DIV   # blue = capacity surplus, red = burden
 gdf.plot(column='MI', ax=ax, cmap=cmap_mi, norm=norm_mi,
          edgecolor='white', linewidth=0.3, missing_kwds={'color': '#dddddd'})
 ax.set_xlim(73, 136); ax.set_ylim(17, 54)
@@ -410,8 +419,8 @@ burden = [sm.loc['burden', 'n_pct'], sm.loc['burden', 'GW_pct'],
 surplus = [sm.loc['surplus', 'n_pct'], sm.loc['surplus', 'GW_pct'],
            sm.loc['surplus', 'emis_pct'], sm.loc['surplus', 'GDP_pct']]
 x = np.arange(len(cats))
-ax.bar(x, burden, width=0.5, color='#d06e69', label='Burden-carrier (MI>0)')
-ax.bar(x, surplus, bottom=burden, width=0.5, color='#70ceaa', label='Capacity-surplus (MI<0)')
+ax.bar(x, burden, width=0.5, color='#D6604D', label='Burden-bearing (MI>0)')
+ax.bar(x, surplus, bottom=burden, width=0.5, color='#4393C3', label='Capacity-surplus (MI<0)')
 for xi, b, sp in zip(x, burden, surplus):
     ax.text(xi, b / 2, f'{b:.0f}%', ha='center', va='center', fontsize=14, color='white')
     ax.text(xi, b + sp / 2, f'{sp:.0f}%', ha='center', va='center', fontsize=14, color='white')

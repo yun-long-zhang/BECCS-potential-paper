@@ -1,0 +1,10 @@
+{
+  "scenario": "STOR25",
+  "label": "Storage 25-year horizon",
+  "params": {
+    "BECCS_EFR": "0.50",
+    "BECCS_LIFE": "25",
+    "BECCS_BIO_FACTOR": "1.0",
+    "label": "Storage 25-year horizon"
+  }
+}

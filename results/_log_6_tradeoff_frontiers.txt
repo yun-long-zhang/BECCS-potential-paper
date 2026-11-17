@@ -1,0 +1,16 @@
+cost frontier: 162 points
+distance 75 km done
+distance 100 km done
+distance 125 km done
+distance 150 km done
+distance 175 km done
+distance 200 km done
+distance 250 km done
+distance 300 km done
+distance 350 km done
+distance 400 km done
+distance 500 km done
+distance 750 km done
+distance 1000 km done
+distance 1500 km done
+saved ../results/tradeoff_frontiers.xlsx

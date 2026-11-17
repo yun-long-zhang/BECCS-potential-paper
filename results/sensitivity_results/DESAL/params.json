@@ -1,0 +1,11 @@
+{
+  "scenario": "DESAL",
+  "label": "Desalination (coastal water unlimited)",
+  "params": {
+    "BECCS_EFR": "0.50",
+    "BECCS_LIFE": "20",
+    "BECCS_BIO_FACTOR": "1.0",
+    "BECCS_DESAL": "1",
+    "label": "Desalination (coastal water unlimited)"
+  }
+}

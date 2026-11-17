@@ -1,0 +1,10 @@
+{
+  "scenario": "EFR80",
+  "label": "Environmental flow 80%",
+  "params": {
+    "BECCS_EFR": "0.80",
+    "BECCS_LIFE": "20",
+    "BECCS_BIO_FACTOR": "1.0",
+    "label": "Environmental flow 80%"
+  }
+}

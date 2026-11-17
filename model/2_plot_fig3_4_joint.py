@@ -15,6 +15,8 @@ Scarce count = (BCR<1)+(SER<1)+(WSR(EFR50)>1). Outputs PNG, PDF, XLSX."""
 import os
 import numpy as np
 import pandas as pd
+
+import _cols
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -45,7 +47,7 @@ c['SER'] = pd.to_numeric(c['市级封存排放比_SER'], errors='coerce')
 c['WSR'] = c[WSR_COL]
 c['GW'] = c['地级市装机_MW'] / 1000.0
 
-p = pd.read_excel(SRC, sheet_name=os.environ.get('BECCS_SHEET', '市域内比较'))
+p = _cols.read_plants(SRC)
 p = p[p['序号'].notna()].copy()
 p['年碳排放Mt'] = pd.to_numeric(p['年碳排放Mt'], errors='coerce')
 p['地级市'] = p['所在城市'].astype(str)
@@ -83,7 +85,7 @@ def _lorenz(vals):
 sc_emis = c.groupby('scarce')['EMIS_pct'].sum().reindex([0, 1, 2, 3]).fillna(0)
 sc_emis = sc_emis / sc_emis.sum() * 100
 labels = ['0 (resource-rich)', '1 (resource-moderate)', '2 (resource-short)', '3 (resource-vacuum)']
-colors = ['#1a9850', '#fee08b', '#fdae61', '#d73027']
+colors = ['#2166AC', '#92C5DE', '#F4A582', '#B2182B']
 
 # ---- export ----
 with pd.ExcelWriter(OUT + '.xlsx') as xw:
@@ -147,7 +149,7 @@ _style.panel_label(ax, 'a')
 
 # (b) emissions vs BCR
 ax = fig.add_subplot(gs[0, 1])
-ax.scatter(c['BCR'], c['EMIS_pct'], s=18, alpha=0.55, c='#2b8cbe', edgecolor='none')
+ax.scatter(c['BCR'], c['EMIS_pct'], s=18, alpha=0.55, c=_style.C_BIO, edgecolor='none')
 ax.set_xscale('log')
 ax.set_xlabel('City BCR (log)')
 ax.set_ylabel('City emission share [%]')
@@ -156,7 +158,7 @@ _style.panel_label(ax, 'b')
 
 # (c) emissions vs SER
 ax = fig.add_subplot(gs[1, 0])
-ax.scatter(c['SER'], c['EMIS_pct'], s=18, alpha=0.55, c='#d95f0e', edgecolor='none')
+ax.scatter(c['SER'], c['EMIS_pct'], s=18, alpha=0.55, c=_style.C_CO2, edgecolor='none')
 ax.set_xscale('log')
 ax.set_xlabel('City SER (log)')
 ax.set_ylabel('City emission share [%]')
@@ -165,7 +167,7 @@ _style.panel_label(ax, 'c')
 
 # (d) emissions vs WSR
 ax = fig.add_subplot(gs[1, 1])
-ax.scatter(c['WSR'], c['EMIS_pct'], s=18, alpha=0.55, c='#756bb1', edgecolor='none')
+ax.scatter(c['WSR'], c['EMIS_pct'], s=18, alpha=0.55, c=_style.C_WAT, edgecolor='none')
 ax.set_xscale('log')
 ax.set_xlabel('City WSR (log)')
 ax.set_ylabel('City emission share [%]')

@@ -1,0 +1,10 @@
+{
+  "scenario": "BIO50",
+  "label": "Biomass 50% available",
+  "params": {
+    "BECCS_EFR": "0.50",
+    "BECCS_LIFE": "20",
+    "BECCS_BIO_FACTOR": "0.50",
+    "label": "Biomass 50% available"
+  }
+}

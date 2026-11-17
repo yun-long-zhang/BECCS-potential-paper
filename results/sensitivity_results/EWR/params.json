@@ -1,0 +1,11 @@
+{
+  "scenario": "EWR",
+  "label": "CO2-EWR water recovery (1 t water/t CO2)",
+  "params": {
+    "BECCS_EFR": "0.50",
+    "BECCS_LIFE": "20",
+    "BECCS_BIO_FACTOR": "1.0",
+    "BECCS_EWR": "1.0",
+    "label": "CO2-EWR water recovery (1 t water/t CO2)"
+  }
+}

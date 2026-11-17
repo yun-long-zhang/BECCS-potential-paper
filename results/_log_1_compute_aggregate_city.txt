@@ -1,0 +1,29 @@
+water: new basis (ChinaWR TWR + HSWUD, plant Thiessen) -> 2171 / 2171 plants matched
+电厂数: 2171, 地级市数: 304
+数据来源分布:
+数据来源
+ChinaWR+HSWUD(plant Thiessen)    304
+
+地级市级 总压 WSR (EFR 20/37/50/80):
+  EFR20: WSR>1 = 24.3% | 中位 0.553
+  EFR00: WSR>1 = 18.4% | 中位 0.353
+  EFR37: WSR>1 = 33.6% | 中位 0.723
+  EFR50: WSR>1 = 38.8% | 中位 0.853
+  EFR80: WSR>1 = 66.8% | 中位 1.153
+
+水资源口径:
+  新 water_thiessen_cityclip.xlsx | 电厂级 R=R_亿m3, U=U_竞争_亿m3 (ChinaWR TWR + HSWUD dom+manu+irr, 1980-2020 均值)
+  城市值 = 本市各电厂自身值之和(非整市总量)
+  R 总和=16084 亿m3   U 总和=3259 亿m3
+
+市级 BCR/SER:
+  BCR_city>1: 13.5% | SER_city>1: 25.0%
+
+电厂级 vs 城市级 (三比例):
+                电厂级       城市级(按城市)       城市级(按电厂)
+  BCR         30.0%          13.5%           6.6%
+  SER         17.5%          25.0%          26.5%
+  WSR50       49.1%          38.8%          51.7%
+  注: 电厂级用各厂自有资源; 城市级=同市各厂资源/需求分别求和后相除
+
+saved: ../results_v2_new/plant_city_hswud_aggregated.xlsx

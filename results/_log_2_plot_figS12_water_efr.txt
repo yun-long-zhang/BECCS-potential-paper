@@ -1,0 +1,4 @@
+saved ../results_v2/FigS12_water_efr.png/.pdf/.xlsx
+  EFR 20%: share=24.3%, median=0.553
+  EFR 50%: share=38.8%, median=0.853
+  EFR 80%: share=66.8%, median=1.153

@@ -1,0 +1,13 @@
+saved: ../results_v2_new/Fig3_6_prefecture_8class.xlsx
+saved: ../results_v2_new/prefecture_8class.csv
+
+=== eight-class state distribution ===
+             class  n_cities    cap_GW     emis_Mt  emis_pct   cap_pct  city_pct  class_id
+bio+sto+water-rich        11   3.72100   12.516604  0.291366  0.330903  3.618421         1
+       water-short         4   4.49450   14.544433  0.338571  0.399690  1.315789         2
+     bio+sto-short       125 447.61304 1645.353073 38.301148 39.805617 41.118421         3
+         bio-short        27  73.10930  282.476926  6.575604  6.501510  8.881579         4
+         sto-short        23  12.68344   47.543859  1.106744  1.127921  7.565789         5
+   bio+water-short        34 172.19870  693.901774 16.152906 15.313395 11.184211         6
+   sto+water-short         3   0.71960    2.762986  0.064318  0.063993  0.986842         7
+            vacuum        77 409.95760 1596.732651 37.169343 36.456970 25.328947         8
